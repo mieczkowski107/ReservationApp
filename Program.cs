@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using ReservationApp.Data;
+using ReservationApp.Data.Repository;
+using ReservationApp.Data.Repository.IRepository;
 
 namespace ReservationApp
 {
@@ -14,8 +16,10 @@ namespace ReservationApp
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+            builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
             var app = builder.Build();
 
+            
             // Configure the HTTP request pipeline.
             if (!app.Environment.IsDevelopment())
             {
