@@ -57,6 +57,13 @@
 
                             <span asp-validation-for="Company.CategoryId" class="text-danger"></span>
                         </div>
+                        <div class="form-floating py-2 col-12">
+                            <label asp-for="Company.Description" class="ms-2"></label>
+                            <textarea asp-for="Company.Description" class="form-control border-0 shadow">
+
+                           </textarea>
+                            <span asp-validation-for="Company.Description" class="text-danger"></span>
+                        </div>
                         <div class="row pt-2">
                             <div class="col-6 col-md-3">
                                 @if (Model.Company.Id != 0)
@@ -82,5 +89,15 @@
     </div>
 </div>
 @section Scripts {
+    <script src="https://cdn.tiny.cloud/1/zblvnhjnh8jmx26kj7dk9zi73g86b7ta2wm52ydc2b9en2le/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
+
+    <script>
+        tinymce.init({
+          selector: 'textarea',
+          plugins: 'anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount',
+          toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table | align lineheight | numlist bullist indent outdent | emoticons charmap | removeformat',
+        });
+    </script>
+
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
 }

@@ -11,6 +11,7 @@ namespace ReservationApp.Models
         [Required]
         [MaxLength(255)]
         public string Name { get; set; }
+
         [Required]
         [MaxLength(255)]    
         public string Address { get; set; }
@@ -36,6 +37,9 @@ namespace ReservationApp.Models
         [ForeignKey("CategoryId")]
         [ValidateNever]
         public Category Category { get; set; }
+
+        [Required]
+        public string Description { get; set; }
 
     }
 }

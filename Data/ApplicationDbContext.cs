@@ -27,7 +27,8 @@ namespace ReservationApp.Data
                     Zip = "12345",
                     Phone = "123-456-7890",
                     Email = "ink@gmail.com",
-                    CategoryId = 1
+                    CategoryId = 1,
+                    Description = "Tattoo Description"
                 },
                 new Company
                 {
@@ -39,7 +40,8 @@ namespace ReservationApp.Data
                     Zip = "12345",
                     Phone = "123-456-7890",
                     Email = "barber@gmail.com",
-                    CategoryId = 2
+                    CategoryId = 2,
+                    Description = "Barber Shop Description"
                 },
                 new Company
                 {
@@ -51,7 +53,8 @@ namespace ReservationApp.Data
                     Zip = "12345",
                     Phone = "123-456-7890",
                     Email = "physio@gmail.com",
-                    CategoryId = 3
+                    CategoryId = 3,
+                    Description = "Physiotherapy Clinic Description"
                 });
         }
     }

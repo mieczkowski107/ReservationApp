@@ -1,8 +1,55 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
-}
+﻿@model CompaniesCategoriesVM
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="row pb-3">
+    @foreach (var item in Model.Categories)
+    {
+        <h3 class="border-bottom border-primary pt-2">
+            @item.Name
+        </h3>
+        @foreach (var company in Model.Companies.Where(x => x.CategoryId == item.Id))
+        {
+            <div class="col-lg-3 col-sm-6">
+                <div class="row p-2">
+                    <div class="col-12 p-1">
+                        <div class="card border-0 p-3 shadow border-top border-5 rounded">
+                            <img src="ImageUrl" class="card-img-top rounded" />
+                            <div class="card-body pb-0">
+                                <div class="pl-1">
+                                    <p class="card-title h5 text-primary  opacity-75 text-uppercase text-center">@company.Name</p>
+                                    <p class="card-title h6 text-primary  opacity-75 text-uppercase text-center"> <i class="bi bi-telephone-fill"></i> @company.Phone</p>
+                                    <hr class="opacity-100" />
+                                </div>
+                                <div class="pl-1">
+                                    <p class="text-dark opacity-75 text-center mb-0">
+                                        <i class="bi bi-geo-alt-fill"></i>
+                                        <span>
+                                            @company.Address <br />
+                                            @company.City
+                                            @company.State
+                                            @company.Zip
+                                        </span>
+                                    </p>
+                                </div>
+                                <div class="pl-1">
+                                    <p class="text-dark opacity-75 text-center">
+                                        <i class="bi bi-tags"></i>
+                                        <span>
+                                            0-100
+                                        </span>
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="">
+                                <a asp-action="Details" asp-route-productId="" class="btn btn-primary btn-sm bg-gradient border-0 form-control">
+                                        Details  <i class="bi bi-zoom-in"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    }
 </div>
+
+
