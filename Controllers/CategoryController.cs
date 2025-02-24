@@ -45,10 +45,12 @@ namespace ReservationApp.Controllers
                 if (category?.Id == 0 || category?.Id == null)
                 {
                     _unitOfWork.Categories.Add(category);
+                    TempData["success"] = "Category added succesffuly!";
                 }
                 else
                 {
                     _unitOfWork.Categories.Update(category);
+                    TempData["success"] = "Category updated succesffuly!";
                 }
                 _unitOfWork.Save();
                 return RedirectToAction("Index");
@@ -79,10 +81,13 @@ namespace ReservationApp.Controllers
             var objFromDb = _unitOfWork.Categories.Get(c => c.Id == id);
             if (objFromDb == null)
             {
+                TempData["error"] = "Error while deleting";
+                return RedirectToAction(nameof(Index));
                 return Json(new { success = false, message = "Error while deleting" });
             }
             _unitOfWork.Categories.Remove(objFromDb);
             _unitOfWork.Save();
+            TempData["success"] = "Category successfully deleted";
             return RedirectToAction(nameof(Index));
         }
 
