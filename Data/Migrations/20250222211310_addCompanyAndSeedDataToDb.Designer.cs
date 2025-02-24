@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ReservationApp.Data;
 
@@ -10,9 +11,11 @@ using ReservationApp.Data;
 namespace ReservationApp.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250222211310_addCompanyAndSeedDataToDb")]
+    partial class addCompanyAndSeedDataToDb
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -104,44 +107,6 @@ namespace ReservationApp.Migrations
                     b.HasIndex("CategoryId");
 
                     b.ToTable("Companies");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Address = "1234 Tattoo St",
-                            CategoryId = 1,
-                            City = "Tattoo City",
-                            Email = "ink@gmail.com",
-                            Name = "Ink Master",
-                            Phone = "123-456-7890",
-                            State = "Tattoo State",
-                            Zip = "12345"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Address = "1234 Barber St",
-                            CategoryId = 2,
-                            City = "Barber City",
-                            Email = "barber@gmail.com",
-                            Name = "Barber Shop",
-                            Phone = "123-456-7890",
-                            State = "Barber State",
-                            Zip = "12345"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Address = "1234 Physiotherapy St",
-                            CategoryId = 3,
-                            City = "Physiotherapy City",
-                            Email = "physio@gmail.com",
-                            Name = "Physiotherapy Clinic",
-                            Phone = "123-456-7890",
-                            State = "Physiotherapy State",
-                            Zip = "12345"
-                        });
                 });
 
             modelBuilder.Entity("ReservationApp.Models.Company", b =>
