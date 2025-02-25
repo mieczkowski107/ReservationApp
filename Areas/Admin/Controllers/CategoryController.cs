@@ -1,11 +1,15 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using ReservationApp.Data.Repository.IRepository;
 using ReservationApp.Models;
+using ReservationApp.Utility;
+using System.Configuration;
 
 
 namespace ReservationApp.Areas.Admin.Controllers;
 
 [Area("Admin")]
+[Authorize(Roles = "Admin")]
 public class CategoryController : Controller
 {
     private readonly IUnitOfWork _unitOfWork;
@@ -39,6 +43,7 @@ public class CategoryController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    
     public IActionResult Upsert(Category? category)
     {
         if (ModelState.IsValid)
