@@ -8,12 +8,14 @@ namespace ReservationApp.Data.Repository
         private ApplicationDbContext _db;
         public ICategoryRepository Categories { get; private set; }
         public ICompanyRepository Companies { get; private set; }
+        public IServiceRepository Services { get; private set; }
 
         public UnitOfWork(ApplicationDbContext db)
         {
             _db = db;
             Categories = new CategoryRepository(_db);
             Companies = new CompanyRepository(_db);
+            Services = new ServiceRepository(_db);
         }
         public void Save()
         {

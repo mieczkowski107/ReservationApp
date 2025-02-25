@@ -5,6 +5,7 @@ namespace ReservationApp.Data.Repository.IRepository
     {
         public ICategoryRepository Categories { get; }
         public ICompanyRepository Companies { get; }
+        public IServiceRepository Services { get; }
         void Save();
     }
 }

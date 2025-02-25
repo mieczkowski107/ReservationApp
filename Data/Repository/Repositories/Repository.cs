@@ -58,7 +58,8 @@ namespace ReservationApp.Data.Repository.Repositories
                     query = query.Include(includeProperty);
                 }
             }
-            return  query.ToList();
+            var result = query.ToList();
+            return result;
         }
 
         public void Update(T entity)
