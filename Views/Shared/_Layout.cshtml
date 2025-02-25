@@ -10,19 +10,20 @@
     <link rel="stylesheet" href="~/ReservationApp.styles.css" asp-append-version="true" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/css/toastr.min.css" />
+
 </head>
 <body>
     <header>
         <nav class="navbar navbar-expand-lg bg-primary px-4 py-3 mb-3" data-bs-theme="dark" >
             <div class="container-fluid">
-                <a class="navbar-brand text-white" asp-controller="Home" asp-action="Index">ReservationApp</a>
+                <a class="navbar-brand text-white" asp-area="Customer" asp-controller="Home" asp-action="Index"><img src="~/images/logo.png" width="50" /></a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarColor01" aria-controls="navbarColor01" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon text-white"></span>
                 </button>
                 <div class="collapse navbar-collapse" id="navbarColor01">
                     <ul class="navbar-nav me-auto">
                         <li class="nav-item">
-                            <a class="nav-link active text-white" asp-controller="Home" asp-action="index">
+                            <a class="nav-link active text-white" asp-area="customer" asp-controller="Home" asp-action="index">
                                 Home
                                 <span class="visually-hidden">(current)</span>
                             </a>
@@ -39,8 +40,8 @@
                         <li class="nav-item dropdown text-white">
                             <a class="nav-link dropdown-toggle text-white" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Content Mangament</a>
                             <div class="dropdown-menu">
-                                <a class="dropdown-item text-white text-center" asp-controller = "Category" asp-action="Index">Category</a>
-                                <a class="dropdown-item text-white text-center" asp-controller="Company" asp-action="Index">Company</a>
+                                <a class="dropdown-item text-white text-center" asp-area="Admin" asp-controller="Category" asp-action="Index">Category</a>
+                                <a class="dropdown-item text-white text-center" asp-area="Admin" asp-controller="Company" asp-action="Index">Company</a>
                                 <a class="dropdown-item text-white text-center" href="#">Action</a>
                                 <div class="dropdown-divider"></div>
                                 <a class="dropdown-item text-white" href="#">Separated link</a>
@@ -49,8 +50,9 @@
                     </ul>
                     <form class="d-flex">
                         <input class="form-control me-sm-2" type="search" placeholder="Search">
-                        <button class="btn btn-secondary my-2 my-sm-0" type="submit">Search</button>
+                        <button class="btn btn-secondary my-2 my-sm-0 mx-1" type="submit"><i class="bi bi-search"></i></button>
                     </form>
+                    <partial name="_LoginPartial" />
                 </div>
             </div>
         </nav>
