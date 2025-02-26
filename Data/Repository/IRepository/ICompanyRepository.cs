@@ -5,5 +5,6 @@ namespace ReservationApp.Data.Repository.IRepository
 {
     public interface ICompanyRepository : IRepository<Company>
     {
+        Dictionary<string, List<Company>> GetCompaniesByCategory();
     }
 }
