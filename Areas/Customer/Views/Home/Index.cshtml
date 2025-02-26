@@ -4,7 +4,8 @@
 <div class="row pb-3">
     @foreach (var item in Model.Categories)
     {
-        <h3 class="border-bottom border-primary pt-2">
+        @if (Model.Companies.Where(u=>u.CategoryId == item.Id).Count()== 0) continue;
+        <h3 class="border-bottom border-primary pt-2">  
             @item.Name
         </h3>
         @foreach (var company in Model.Companies.Where(x => x.CategoryId == item.Id))
