@@ -1,0 +1,64 @@
+﻿@using ReservationApp.Models
+@model Service
+
+<div class="card shadow border-0 my-4">
+    <div class="card-header bg-secondary bg-gradient ml-0 py-3">
+        <div class="row">
+            <div class="col-12 text-center">
+                <h2 class="py-2"> Delete Service</h2>
+            </div>
+        </div>
+    </div>
+    <div class="card-body p-4">
+        <form method="post" class="row">
+            <input asp-for="@Model.Id" hidden />
+            <div class="row">
+                <div class="col-12">
+                    <div class="border p-3">
+                        <div class="form-floating py-2 col-12">
+                            <input asp-for="Name" class="form-control border-0 shadow" readonly />
+                            <label asp-for="Name" class="ms-2"></label>
+                            <span asp-validation-for="Name" class="text-danger"></span>
+                        </div>
+                        <div class="form-floating py-2 col-12">
+                            <input asp-for="Price" class="form-control border-0 shadow" readonly />
+                            <label asp-for="Price" class="ms-2"></label>
+                            <span asp-validation-for="Price" class="text-danger"></span>
+                        </div>
+                        <div class="form-floating py-2 col-12">
+                            <input asp-for="DurationMinutes" class="form-control border-0 shadow" readonly />
+                            <label asp-for="DurationMinutes" class="ms-2"></label>
+                            <span asp-validation-for="DurationMinutes" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-floating py-2 col-12">
+                            <label asp-for="Description" class="ms-2"></label>
+                            <textarea asp-for="Description" class="form-control border-0 shadow" readonly>
+                           </textarea>
+                            <span asp-validation-for="Description" class="text-danger"></span>
+                        </div>
+                        <div class="form-floating py-2 col-12">
+                            <div class="form-check">
+                                <label asp-for="IsPrepaymentRequired" class="ms-2 form-check-label"></label>
+                                <input asp-for="IsPrepaymentRequired" type="checkbox" class="form-control border-0 shadow form-check-input"  disabled/>
+                                <span asp-validation-for="IsPrepaymentRequired" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="row pt-2">
+                            <div class="col-6 col-md-3">
+                                <button type="submit" class="btn btn-danger form-control">Delete</button>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <a asp-controller="Service" asp-action="Index" asp-route-Id="@Model.CompanyId" class="btn btn-outline-primary border  form-control">
+                                    Back to List <i class="bi bi-arrow-left"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </form>
+    </div>
+</div>
+

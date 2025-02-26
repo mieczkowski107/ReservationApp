@@ -1,0 +1,82 @@
+﻿@using ReservationApp.Models
+@model CompanyServiceVM
+
+
+<div class="container">
+    <div class="row pt-4 pb-3">
+        <div class="col-6">
+            <h2 class=" text-primary">
+                Service List 
+            </h2>
+        </div>
+        <div class="col-6 text-end">
+            <a asp-controller="Service" asp-action="Upsert" asp-route-CompanyId="@Model.Company.Id" class="btn btn-primary"><i class="bi bi-plus-circle"></i> Create new service </a>
+        </div>
+    </div>
+</div>
+
+<div class="">
+    <table class="table table-striped table-bordered text-center justify-content-center shadow">
+        <thead>
+            <tr>
+                <th class="table-info">
+                    Name
+                </th>
+                <th class="table-info">
+                    Price
+                </th>
+                <th class="table-info">
+                    Duration
+                </th>
+                <th class="table-info">
+                    Is prepayment Required
+                </th>
+                <th class="table-info">
+                    Description
+                </th>
+            </tr>
+        </thead>
+        <tbody class="">
+            @if (Model == null)
+            {
+                
+            }
+            else
+            {
+                @foreach (var item in Model.Services)
+                {
+                    <tr>
+                        <td>
+                            @item.Name
+                        </td>
+                        <td>
+                            @item.Price
+                        </td>
+                        <td>
+                            @item.DurationMinutes.TotalMinutes minutes
+                        </td>
+                        <td>
+                            @item.IsPrepaymentRequired
+                        </td>
+                        <td class="w-auto">
+                            <div class="row justify-content-center">
+                                <a asp-controller="Service" asp-action="Upsert" asp-route-ServiceId="@item.Id" asp-route-CompanyId="@item.CompanyId" class="btn btn-primary mx-1 w-auto"> <i class="bi bi-pencil-square"></i></a>
+                                <a asp-controller="Service" asp-action="Delete" asp-route-Id="@item.Id" class="btn btn-danger mx-1 w-auto"> <i class="bi bi-trash-fill"></i></a>
+                            </div>
+
+                        </td>
+                    </tr>
+                }
+
+            }
+        </tbody>
+    </table>
+    <div class="text-end">
+        <a asp-area="Admin" asp-controller="Company" asp-action="Index" class="btn btn-primary border  ">
+            Back to list <i class="bi bi-arrow-left"></i>
+       </a>
+    </div>
+
+</div>
+
+
