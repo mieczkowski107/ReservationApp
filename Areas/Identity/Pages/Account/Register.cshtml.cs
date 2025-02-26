@@ -16,8 +16,11 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
+using ReservationApp.Models;
+using ReservationApp.Utility;
 
 namespace ReservationApp.Areas.Identity.Pages.Account
 {
@@ -25,6 +28,7 @@ namespace ReservationApp.Areas.Identity.Pages.Account
     {
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly UserManager<IdentityUser> _userManager;
+        private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IUserStore<IdentityUser> _userStore;
         private readonly IUserEmailStore<IdentityUser> _emailStore;
         private readonly ILogger<RegisterModel> _logger;
@@ -35,7 +39,8 @@ namespace ReservationApp.Areas.Identity.Pages.Account
             IUserStore<IdentityUser> userStore,
             SignInManager<IdentityUser> signInManager,
             ILogger<RegisterModel> logger,
-            IEmailSender emailSender)
+            IEmailSender emailSender,
+            RoleManager<IdentityRole> roleManager)
         {
             _userManager = userManager;
             _userStore = userStore;
@@ -43,6 +48,7 @@ namespace ReservationApp.Areas.Identity.Pages.Account
             _signInManager = signInManager;
             _logger = logger;
             _emailSender = emailSender;
+            _roleManager = roleManager;
         }
 
         /// <summary>
@@ -97,11 +103,43 @@ namespace ReservationApp.Areas.Identity.Pages.Account
             [Display(Name = "Confirm password")]
             [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
             public string ConfirmPassword { get; set; }
+
+
+            [Required]
+            [Display(Name = "First Name")]
+            public string FirstName { get; set; }
+            [Required]
+            [Display(Name = "Last Name")]
+            public string LastName { get; set; }
+            [Required]
+            [Display(Name = "Phone Number")]
+            [Phone]
+            public string PhoneNumber { get; set; }
+            public DateOnly? DateOfBirth { get; set; }
+
+            public Role? Role { get; set; }
+            public IEnumerable<SelectListItem> RoleList { get; set; }
         }
 
 
         public async Task OnGetAsync(string returnUrl = null)
         {
+            if (!_roleManager.RoleExistsAsync(Enum.GetName(Role.Customer)).GetAwaiter().GetResult())
+            {
+                await _roleManager.CreateAsync(new IdentityRole(Enum.GetName(Role.Customer)));
+                await _roleManager.CreateAsync(new IdentityRole(Enum.GetName(Role.Admin)));
+                await _roleManager.CreateAsync(new IdentityRole(Enum.GetName(Role.Employee)));
+                await _roleManager.CreateAsync(new IdentityRole(Enum.GetName(Role.CompanyManager)));
+            }
+            Input = new InputModel
+            {
+                RoleList = _roleManager.Roles.Where(r => r.Name != Enum.GetName(Role.None)).Select(x => new SelectListItem
+                {
+                    Text = x.Name,
+                    Value = x.Name
+                })
+            };
+
             ReturnUrl = returnUrl;
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
         }
@@ -116,11 +154,25 @@ namespace ReservationApp.Areas.Identity.Pages.Account
 
                 await _userStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
                 await _emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
+                user.FirstName = Input.FirstName;
+                user.LastName = Input.LastName;
+                user.PhoneNumber = Input.PhoneNumber;
+                user.DateOfBirth = Input.DateOfBirth;
+                user.PhoneNumber = Input.PhoneNumber;
+
                 var result = await _userManager.CreateAsync(user, Input.Password);
 
                 if (result.Succeeded)
                 {
                     _logger.LogInformation("User created a new account with password.");
+                    if(Input.Role != null)
+                    {
+                        await _userManager.AddToRoleAsync(user, Input.Role.ToString());
+                    }
+                    else
+                    {
+                        await _userManager.AddToRoleAsync(user, Enum.GetName(Role.Customer));
+                    }
 
                     var userId = await _userManager.GetUserIdAsync(user);
                     var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
@@ -154,11 +206,11 @@ namespace ReservationApp.Areas.Identity.Pages.Account
             return Page();
         }
 
-        private IdentityUser CreateUser()
+        private ApplicationUser CreateUser()
         {
             try
             {
-                return Activator.CreateInstance<IdentityUser>();
+                return Activator.CreateInstance<ApplicationUser>();
             }
             catch
             {
