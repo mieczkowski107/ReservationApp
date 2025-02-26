@@ -43,7 +43,6 @@ public class CategoryController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    
     public IActionResult Upsert(Category? category)
     {
         if (ModelState.IsValid)
@@ -85,15 +84,25 @@ public class CategoryController : Controller
     public IActionResult Delete(int id)
     {
         var objFromDb = _unitOfWork.Categories.Get(c => c.Id == id);
+        var companies = _unitOfWork.Companies.GetAll(u=>u.CategoryId == id, includeProperties:nameof(Category));
         if (objFromDb == null)
         {
             TempData["error"] = "Error while deleting";
             return RedirectToAction(nameof(Index));
             //return Json(new { success = false, message = "Error while deleting" });
         }
-        _unitOfWork.Categories.Remove(objFromDb);
-        _unitOfWork.Save();
-        TempData["success"] = "Category successfully deleted";
+        if(companies.Count() <= 0)
+        {
+            _unitOfWork.Categories.Remove(objFromDb);
+            _unitOfWork.Save();
+            TempData["success"] = "Category successfully deleted";
+        }
+        else
+        {
+            TempData["error"] = "Can not delete a category if it is assigned to any company";
+        }
+
+        
         return RedirectToAction(nameof(Index));
     }
 
