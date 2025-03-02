@@ -24,11 +24,15 @@ public class ServiceController : Controller
             return NotFound();
         }
         var services = _unitOfWork.Services.GetAll(u => u.CompanyId == (int)Id, includeProperties: nameof(Company)).ToList();
-        companyId = (int)Id;
+        var company = _unitOfWork.Companies.Get(u => u.Id == Id);
+        if(company == null)
+        {
+            return NotFound();
+        }
 
         CompanyServiceVM companyServiceVM = new CompanyServiceVM()
         {
-            Company = _unitOfWork.Companies.Get(u => u.Id == Id),
+            Company = company,
             Services = services
         };
         return View(companyServiceVM);
