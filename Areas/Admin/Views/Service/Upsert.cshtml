@@ -21,13 +21,13 @@
                             <span asp-validation-for="Name" class="text-danger"></span>
                         </div>
                         <div class="form-floating py-2 col-12">
-                            <input asp-for="Price" class="form-control border-0 shadow" />
+                            <input asp-for="Price" type="number" class="form-control border-0 shadow" />
                             <label asp-for="Price" class="ms-2"></label>
                             <span asp-validation-for="Price" class="text-danger"></span>
                         </div>
                         <div class="form-floating py-2 col-12">
-                            <input asp-for="DurationMinutes" class="form-control border-0 shadow" />
-                            <label asp-for="DurationMinutes" class="ms-2"></label>
+                            <input asp-for="DurationMinutes"  class="form-control border-0 shadow" />
+                            <label asp-for="DurationMinutes" class="ms-2">Duration (Format: hh:mm:ss)</label>
                             <span asp-validation-for="DurationMinutes" class="text-danger"></span>
                         </div>
                        
