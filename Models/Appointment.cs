@@ -9,7 +9,7 @@ public class Appointment
     [Required]
     public int Id { get; set; }
     [Required]
-    public int UserId { get; set; }
+    public string UserId { get; set; }
     [Required]
     public int ServiceId { get; set; }
     [Required]
