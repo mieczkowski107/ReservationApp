@@ -1,6 +1,7 @@
 ﻿@using ReservationApp.Models
 @model List<Service>
-<div class="card">
+
+<div class="card border-primary">
     <div class="card-header shadow  bg-primary pt-3">
         <h3 class="text-white text-center ">@Model[0].Company.Name</h3>
 
@@ -13,20 +14,20 @@
                 @Html.Raw(Model[0].Company.Description)
             </div>
         </span>
-
     </p>
+    <hr class="m-0 pb-3"/>
     @foreach (var item in Model)
     {
-        <div class="card-body p-3">
-            <div class="card mb-3">
-                <div class="card-header shadow border-black">
+        <div class="card-body p-3 border-primary" >
+            <div class="card mb-3 border-primary">
+                <div class="card-header shadow border-primary">
                     <div class="container">
                         <div class="row">
                             <div class="col-6">
                                 <h3>@item.Name</h3>
                             </div>
                             <div class="col-6  text-end">
-                                <a asp-controller="reservation" asp-action="index" class="btn btn-info text-end">
+                                <a asp-area="Customer" asp-controller="Appointment" asp-action="Index"  asp-route-ServiceId = "@item.Id"  class="btn btn-info text-end" >
                                     Book <i class="bi bi-bookmark"></i>
                                 </a>
                             </div>
@@ -63,5 +64,17 @@
         </div>
     }
 
-
+   
+   
 </div>
+
+
+@section scripts
+{
+    <script>
+        $(document).ready(function () {
+            $('#exampleModalLong').modal('handleUpdate'); // Upewnia się, że modal jest poprawnie zainicjalizowany
+        });
+    </script>
+}
+
