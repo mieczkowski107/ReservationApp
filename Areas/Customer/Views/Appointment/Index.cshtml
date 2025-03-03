@@ -1,1 +1,176 @@
-﻿<h1>Appointment</h1>
+﻿@model AppointmentVM // Model widoku
+
+<div class="card ">
+    <div class="card-header shadow pt-3">
+        <h3 class="text-center">Name of service</h3>
+        <hr />
+        <div class="container">
+            <div class="row">
+                <p class="m-0 col-7 text-dark opacity-75 mb-0">
+                    <span>
+                        Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                        Vivamus viverra, mi vitae ultricies sollicitudin, dolor arcu
+                        semper odio, eu mollis eros ante gravida orci. Pellentesque
+                        sit amet ex vitae ante feugiat luctus at eu nisl.
+                    </span>
+                </p>
+                <p class="m-0 col-2 text-dark opacity-75 text-end mb-0 fw-bold">
+                    Duration:
+                    <span>
+                        30 minutes
+                    </span>
+                </p>
+                <p class="m-0 col-2 text-dark opacity-75 text-end mb-0 fw-bold">
+                    Price
+                    <span>
+                        100 zł
+                    </span>
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="container mt-4">
+            <h2 class="text-center mb-3">Choose date and hour</h2>
+
+            <!-- Wybór daty -->
+            <div id="date-container" class="d-flex overflow-auto gap-2 p-2"></div>
+
+            <!-- Kontener na godziny -->
+            <div id="time-container" class="mt-4">
+                <h4 id="selected-date-title" class="text-center">Available hours:</h4>
+                <div id="time-scroll" class="d-flex gap-2 mt-3 p-2"
+                     style="overflow-x: auto; white-space: nowrap; scroll-behavior: smooth;"></div>
+            </div>
+
+          
+            <!-- Formularz do wysyłania wyboru z wykorzystaniem atrybutów ASP.NET Core -->
+            <form id="appointment-form" method="post">
+                <!-- Ukryte pola do przechowywania wyboru -->
+                <input asp-for="ServiceId" type="hidden" name="ServiceId" value="@Model.ServiceId" />
+                <input asp-for="UserId" type="hidden" name="UserId" value="@Model.UserId" />
+                <input asp-for="SelectedDate" type="hidden" id="selected-date" name="selectedDate" />
+                <input asp-for="SelectedTime" type="hidden" id="selected-time" name="selectedTime" />
+
+                <div class="text-center mt-4">
+                    <button asp-area="Customer" 
+                            asp-controller="Appointment"
+                            asp-action="ConfirmChoice" type="submit" class="btn btn-success" id="submit-btn" disabled>
+                        Confirm choice
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+                document.addEventListener("DOMContentLoaded", function () {
+            const dateContainer = document.getElementById("date-container");
+            const timeContainer = document.getElementById("time-scroll");
+            const selectedDateTitle = document.getElementById("selected-date-title");
+            const selectedDateInput = document.getElementById("selected-date");
+            const selectedTimeInput = document.getElementById("selected-time");
+            const submitBtn = document.getElementById("submit-btn");
+            const appointmentForm = document.getElementById("appointment-form");
+
+            let availableDates = {};
+
+            // Pobieranie ServiceId z URL-a
+            function getServiceIdFromUrl() {
+                const urlParams = new URLSearchParams(window.location.search);
+                return urlParams.get("ServiceId");
+            }
+
+            // Pobranie dostępnych godzin dla usługi
+            function fetchAvailableDates(serviceId) {
+                if (!serviceId) {
+                    console.error("Brak ServiceId w URL!");
+                    return;
+                }
+                fetch(`/Customer/Appointment/GetDateAndHours?ServiceId=${serviceId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        availableDates = data;
+                        renderDates();
+                    })
+                    .catch(error => console.error("Błąd pobierania dostępnych godzin:", error));
+            }
+
+            // Renderowanie dostępnych dat
+            function renderDates() {
+                dateContainer.innerHTML = "";
+                timeContainer.innerHTML = "";
+                selectedDateTitle.textContent = "Available hours";
+
+                Object.keys(availableDates).forEach((date, index) => {
+                    const button = document.createElement("button");
+                    button.textContent = date;
+                    button.classList.add("btn", "btn-light", "date-tile", "px-3", "py-2");
+                    button.dataset.date = date;
+
+                    button.addEventListener("click", function () {
+                        document.querySelectorAll(".date-tile").forEach(btn => btn.classList.replace("btn-primary", "btn-light"));
+                        this.classList.replace("btn-light", "btn-primary");
+                        updateTimes(date);
+                    });
+
+                    dateContainer.appendChild(button);
+
+                    // Automatycznie wybierz pierwszą dostępną datę
+                    if (index === 0) {
+                        button.click();
+                    }
+                });
+            }
+
+            // Aktualizacja dostępnych godzin
+            function updateTimes(selectedDate) {
+                selectedDateTitle.textContent = `Available hours: ${selectedDate}`;
+                selectedDateInput.value = selectedDate;  // Ustawienie wartości w ukrytym polu
+                timeContainer.innerHTML = "";
+                selectedTimeInput.value = ""; // Resetowanie godziny przy zmianie daty
+                submitBtn.disabled = true; // Dezaktywacja przycisku, gdy nie wybrano godziny
+
+                if (availableDates[selectedDate]) {
+                    availableDates[selectedDate].forEach(time => {
+                        const button = document.createElement("button");
+                        button.textContent = time;
+                        button.classList.add("btn", "btn-outline-primary", "time-tile", "px-3", "py-2");
+                        button.dataset.time = time;
+
+                        button.addEventListener("click", () => {
+                            document.querySelectorAll(".time-tile").forEach(btn => btn.classList.replace("btn-primary", "btn-outline-primary"));
+                            button.classList.replace("btn-outline-primary", "btn-primary");
+                            selectedTimeInput.value = time;  // Ustawienie wartości godziny w ukrytym polu
+                            submitBtn.disabled = false; // Aktywacja przycisku, gdy wybrano godzinę
+                        });
+
+                        timeContainer.appendChild(button);
+                    });
+                }
+            }
+
+            // Pobranie ServiceId i załadowanie dat
+            const serviceId = getServiceIdFromUrl();
+            if (serviceId) {
+                fetchAvailableDates(serviceId);
+            } else {
+                console.error("Brak ServiceId w URL!");
+            }
+
+            // Obsługa zatwierdzenia wyboru (przed wysłaniem formularza)
+            appointmentForm.addEventListener("submit", function (event) {
+                if (!selectedDateInput.value || !selectedTimeInput.value) {
+                    event.preventDefault(); // Zapobiegnij wysłaniu formularza
+                    alert("Choose date and hour!");
+                } else {
+                    // Ustawienie wartości w formularzu przed jego wysłaniem
+                    selectedDateInput.value = selectedDateInput.value;
+                    selectedTimeInput.value = selectedTimeInput.value;
+                }
+            });
+        });
+    </script>
+}

@@ -2,6 +2,9 @@
 using Microsoft.AspNetCore.Mvc;
 using ReservationApp.Data.Repository.IRepository;
 using ReservationApp.Models;
+using ReservationApp.Models.ViewModels;
+using System.Linq;
+using System.Security.Claims;
 
 namespace ReservationApp.Areas.Customer.Controllers;
 
@@ -10,11 +13,46 @@ namespace ReservationApp.Areas.Customer.Controllers;
 public class AppointmentController : Controller
 {
     private readonly IUnitOfWork _unitOfWork;
+    [BindProperty]
+    public AppointmentVM appointmentVM { get; set; }
     public AppointmentController(IUnitOfWork unitOfWork)
     {
         _unitOfWork = unitOfWork;
     }
+
     public IActionResult Index(int? ServiceId)
+    {
+        if(ServiceId == null)
+        {
+            return NotFound();
+        }
+        appointmentVM = new AppointmentVM
+        {
+            ServiceId = (int)ServiceId,
+            UserId = User.Claims.FirstOrDefault(u => u.Type == ClaimTypes.NameIdentifier)!.Value
+        };
+        return View(appointmentVM);
+    }
+
+    [HttpPost]
+    public IActionResult ConfirmChoice(AppointmentVM appointmentVM)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View("Index", appointmentVM);
+        }
+        return View(appointmentVM);
+    }
+
+    public IActionResult Confirmation()
+    {
+       
+
+        return View();
+    }
+
+    #region ApiCalls
+    public IActionResult GetDateAndHours(int ServiceId)
     {
         if (ServiceId == null)
         {
@@ -26,7 +64,7 @@ public class AppointmentController : Controller
 
         Dictionary<DateOnly, List<TimeOnly>> availableDatesAndHours = new();
         // Ustalenie pierwszej i ostatniej daty, które można wybrać
-        DateOnly firstDate = DateOnly.FromDateTime(DateTime.Now.AddDays(1)); // Nie można wybrać dzisiejszej daty
+        DateOnly firstDate = DateOnly.FromDateTime(DateTime.Now.AddDays(2)); // Nie można wybrać dzisiejszej daty
         DateOnly lastDate = DateOnly.FromDateTime(DateTime.Now.AddDays(30)); // Nie można wybrać daty późniejszej niż 30 dni od dzisiejszej daty
         // Ustalenie godzin pracy firmy
         TimeOnly startTime = new(8, 0, 0); // In future, this should be fetched from the database based on the company working hours 
@@ -59,20 +97,18 @@ public class AppointmentController : Controller
                                             appointment.Time <= hour
                                             && hour < maxTime);
             }
-            // Usunięcie godzin, które nie są dostępne z powodu zbyt krótkiego czasu na wykonanie tej konkretnej usługi (ServiceId)
-            for (int j = availableHours.Count - 1; j > 0; j--)
-            {
-                var difference = availableHours[j] - availableHours[j - 1];
-                if (difference.TotalMinutes < service!.DurationMinutes.TotalMinutes)
-                {
-                    availableHours.RemoveAt(j);
-                }
-            }
+            //TO DO:  Usunięcie godzin, które nie są dostępne z powodu zbyt krótkiego czasu na wykonanie tej konkretnej usługi (ServiceId)
+            // Np. Usługa trwa 60 minut, więc nie można wybrać godziny 15:45, bo nie starczy czasu na wykonanie usługi
+            // Np. Usługa trwa 30 minut, a 8:15 jest już zajęta więc nie można się wpisać na godzinę 8:00
+
+
             availableDatesAndHours.Add(i, availableHours);
         }
-
-        return View(availableDatesAndHours);
+        return Json(availableDatesAndHours);
     }
+    #endregion
+
+
 }
 
 
