@@ -17,14 +17,14 @@ public class ServiceController : Controller
     {
         _unitOfWork = unitOfWork;
     }
-    public IActionResult Index(int? Id)
+    public IActionResult Index(int? id)
     {
-        if (Id == null)
+        if (id == null)
         {
             return NotFound();
         }
-        var services = _unitOfWork.Services.GetAll(u => u.CompanyId == (int)Id, includeProperties: nameof(Company)).ToList();
-        var company = _unitOfWork.Companies.Get(u => u.Id == Id);
+        var services = _unitOfWork.Services.GetAll(u => u.CompanyId == (int)id, includeProperties: nameof(Company)).ToList();
+        var company = _unitOfWork.Companies.Get(u => u.Id == id);
         if(company == null)
         {
             return NotFound();
@@ -82,14 +82,13 @@ public class ServiceController : Controller
             return View(service);
         }
     }
-
-    public IActionResult Delete(int? Id)
+    public IActionResult Delete(int? id)
     {
-        if (Id == null)
+        if (id == null)
         {
             return NotFound();
         }
-        var service = _unitOfWork.Services.Get(c => c.Id == Id, includeProperties: nameof(Company));
+        var service = _unitOfWork.Services.Get(c => c.Id == id, includeProperties: nameof(Company));
         if (service == null)
         {
             return NotFound();
@@ -97,14 +96,14 @@ public class ServiceController : Controller
         return View(service);
     }
     [HttpPost]
-    public IActionResult Delete(int Id)
+    public IActionResult Delete(int id)
     {
-        if (Id == null)
+        if (id == null)
         {
             TempData["error"] = "Error while deleting company";
             return NotFound();
         }
-        var service = _unitOfWork.Services.Get(u => u.Id == Id, includeProperties: nameof(Company));
+        var service = _unitOfWork.Services.Get(u => u.Id == id, includeProperties: nameof(Company));
         if (service == null)
         {
             TempData["error"] = "Error while deleting company";
