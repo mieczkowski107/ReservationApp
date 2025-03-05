@@ -23,9 +23,9 @@ public class CompanyController : Controller
         return View(companies);
     }
 
-    public IActionResult Upsert(int? Id)
+    public IActionResult Upsert(int? id)
     {
-        CompanyVM companyVM = new CompanyVM()
+        var companyVm = new CompanyVM()
         {
             Company = new Company(),
             CategoryList = _unitOfWork.Categories.GetAll().Select(i => new SelectListItem
@@ -34,18 +34,18 @@ public class CompanyController : Controller
                 Value = i.Id.ToString()
             })
         };
-        if (Id == null)
+        if (id == null)
         {
-            return View(companyVM);
+            return View(companyVm);
         }
 
-        companyVM.Company = _unitOfWork.Companies.Get(c => c.Id == Id);
+        companyVm.Company = _unitOfWork.Companies.Get(c => c.Id == id);
 
-        if (companyVM.Company == null)
+        if (companyVm.Company == null)
         {
             return NotFound();
         }
-        return View(companyVM);
+        return View(companyVm);
     }
 
     [HttpPost]
@@ -56,30 +56,32 @@ public class CompanyController : Controller
         {
             if (company?.Id == 0 || company?.Id == null)
             {
-                _unitOfWork.Companies.Add(company);
-                TempData["success"] = "Company added succesffuly!";
+                _unitOfWork.Companies.Add(company!);
+                TempData["success"] = "Company added successfully!";
             }
             else
             {
                 _unitOfWork.Companies.Update(company);
-                TempData["success"] = "Company updated succesffuly!";
+                TempData["success"] = "Company updated successfully!";
             }
             _unitOfWork.Save();
             return RedirectToAction("Index");
         }
         else
         {
-            return View(company);
+            TempData["error"] = "Something went wrong!";
+            return RedirectToAction(nameof(Upsert), new { company?.Id });
+            /*return View(company);*/
         }
     }
 
-    public IActionResult Delete(int? Id)
+    public IActionResult Delete(int? id)
     {
-        if (Id == null)
+        if (id == null)
         {
             return NotFound();
         }
-        var company = _unitOfWork.Companies.Get(c => c.Id == Id, includeProperties: nameof(Category));
+        var company = _unitOfWork.Companies.Get(c => c.Id == id, includeProperties: nameof(Category));
         if (company == null)
         {
             return NotFound();
