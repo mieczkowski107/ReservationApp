@@ -45,17 +45,21 @@
 
           
             <!-- Formularz do wysyłania wyboru z wykorzystaniem atrybutów ASP.NET Core -->
-            <form id="appointment-form" method="post">
+            <form id="appointment-form" method="post" 
+                  asp-area="Customer"
+                  asp-controller="Appointment"
+                  asp-action="ConfirmChoice">
                 <!-- Ukryte pola do przechowywania wyboru -->
                 <input asp-for="ServiceId" type="hidden" name="ServiceId" value="@Model.ServiceId" />
-                <input asp-for="UserId" type="hidden" name="UserId" value="@Model.UserId" />
+                @* <input asp-for="UserId" type="hidden" name="UserId" value="@Model.UserId" /> *@
                 <input asp-for="SelectedDate" type="hidden" id="selected-date" name="selectedDate" />
                 <input asp-for="SelectedTime" type="hidden" id="selected-time" name="selectedTime" />
 
                 <div class="text-center mt-4">
                     <button asp-area="Customer" 
                             asp-controller="Appointment"
-                            asp-action="ConfirmChoice" type="submit" class="btn btn-success" id="submit-btn" disabled>
+                            asp-action="ConfirmChoice"
+                            type="submit" class="btn btn-success" id="submit-btn" disabled>
                         Confirm choice
                     </button>
                 </div>
