@@ -35,10 +35,10 @@
                             <a class="nav-link text-white" href="#">Features</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-white " href="#">Pricing</a>
+                            <a class="nav-link text-white " href="#">About</a>
                         </li>
                         <li class="nav-item ">
-                            <a class="nav-link  text-white" href="#">About</a>
+                            <a class="nav-link  text-white" href="#">Contact</a>
                         </li>
                         @if (User.IsInRole(Enum.GetName(Role.Admin)!) || User.IsInRole(Enum.GetName(Role.CompanyManager)!))
                         {
@@ -57,10 +57,10 @@
                             </li>
                         }
                     </ul>
-                    <form class="d-flex">
-                        <input class="form-control me-sm-2" type="search" placeholder="Search">
-                        <button class="btn btn-secondary my-2 my-sm-0 mx-1" type="submit"><i class="bi bi-search"></i></button>
-                    </form>
+                    @* <form class="d-flex"> *@
+                    @*     <input class="form-control me-sm-2" type="search" placeholder="Search"> *@
+                    @*     <button class="btn btn-secondary my-2 my-sm-0 mx-1" type="submit"><i class="bi bi-search"></i></button> *@
+                    @* </form> *@
                     <partial name="_LoginPartial" />
                 </div>
             </div>
