@@ -26,9 +26,9 @@ public class Appointment
 
     [ForeignKey("UserId")]
     [ValidateNever]
-    public ApplicationUser User { get; set; }
+    public ApplicationUser? User { get; set; }
     [ForeignKey("ServiceId")]
     [ValidateNever]
-    public Service Service { get; set; }
+    public Service? Service { get; set; }
 
 }

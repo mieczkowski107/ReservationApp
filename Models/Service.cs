@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Diagnostics.CodeAnalysis;
 
 namespace ReservationApp.Models
 {
@@ -24,17 +26,13 @@ namespace ReservationApp.Models
         public bool IsPrepaymentRequired { get; set; }
 
         public int CompanyId { get; set; }
+
         
+
         [ForeignKey("CompanyId")]
         [ValidateNever]
-        public Company Company { get; set; }
-
-        public Service() { }
-        public Service(int companyId)
-        {
-            CompanyId = companyId;
-        }
-
+        [AllowNull]
+        public Company? Company { get; set; }
 
     }
 }
