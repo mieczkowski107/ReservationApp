@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using ReservationApp.Data.Repository.IRepository;
 using ReservationApp.Models;
 using ReservationApp.Models.ViewModels;
+using ReservationApp.Utility;
 using System.Linq;
 using System.Security.Claims;
 
@@ -13,8 +14,8 @@ namespace ReservationApp.Areas.Customer.Controllers;
 public class AppointmentController : Controller
 {
     private readonly IUnitOfWork _unitOfWork;
-    [BindProperty]
-    public AppointmentVM appointmentVM { get; set; }
+    public AppointmentVM AppointmentVM { get; set; }
+    //public Appointment Appointment { get; set; }
     public AppointmentController(IUnitOfWork unitOfWork)
     {
         _unitOfWork = unitOfWork;
@@ -26,12 +27,11 @@ public class AppointmentController : Controller
         {
             return NotFound();
         }
-        appointmentVM = new AppointmentVM
+        AppointmentVM = new AppointmentVM
         {
             ServiceId = (int)ServiceId,
-            UserId = User.Claims.FirstOrDefault(u => u.Type == ClaimTypes.NameIdentifier)!.Value
         };
-        return View(appointmentVM);
+        return View(AppointmentVM);
     }
 
     [HttpPost]
@@ -39,37 +39,71 @@ public class AppointmentController : Controller
     {
         if (!ModelState.IsValid)
         {
-            return View("Index", appointmentVM);
+            return RedirectToAction("Index", appointmentVM);
         }
-        return View(appointmentVM);
+        var appointment = new Appointment
+        {
+            Date = appointmentVM.SelectedDate,
+            Time = appointmentVM.SelectedTime,
+            ServiceId = appointmentVM.ServiceId,
+            UserId = User.FindFirstValue(ClaimTypes.NameIdentifier)
+        };
+        _unitOfWork.Appointments.Add(appointment);
+        _unitOfWork.Save();
+        return RedirectToAction(nameof(Confirmation), new {appointment.Id});
     }
 
-    public IActionResult Confirmation()
+    public IActionResult Confirmation(int id)
     {
-       
+        var appointment = _unitOfWork.Appointments.Get(u => u.Id == id, includeProperties: "Service", tracked: false);
+        if(appointment is null)
+        {
+            return NotFound();
+        }
+        appointment.Service.Company = _unitOfWork.Companies.Get(u => u.Id == appointment.Service.CompanyId, tracked: false);
 
-        return View();
+        return View(appointment);
     }
 
-    #region ApiCalls
+    public IActionResult Confirmed(int id)
+    {
+        var appointment = _unitOfWork.Appointments.Get(u => u.Id == id, includeProperties: "Service", tracked: false);
+        if (appointment is null)
+        {
+            return NotFound();
+        }
+        appointment.Service.Company = _unitOfWork.Companies.Get(u => u.Id == appointment.Service.CompanyId, tracked: false);
+        appointment.Status = AppointmentStatus.Confirmed;
+        _unitOfWork.Appointments.Update(appointment);
+        _unitOfWork.Save();
+        TempData["success"] = "Your appointment has been confirmed!";
+        return View(appointment);
+    }
+
+    #region APICALLS
+    //TO DO: Dodać zabezpieczenie przed wybraniem daty dzisiejszej oraz jutrzejszej
+    //TO DO: Dodać zabezpieczenie przed wybraniem daty późniejszej niż 30 dni od dzisiejszej daty
     public IActionResult GetDateAndHours(int ServiceId)
     {
+        
         if (ServiceId == null)
         {
             return NotFound();
         }
 
-        var service = _unitOfWork.Services.Get(u => u.Id == ServiceId, includeProperties: "Company");
+        Dictionary<DateOnly, List<TimeOnly>> availableDatesAndHours = [];
+
+        var service = _unitOfWork.Services.Get(u => u.Id == ServiceId, includeProperties: nameof(Company));
         if (service == null) { return NotFound(); }
 
-        Dictionary<DateOnly, List<TimeOnly>> availableDatesAndHours = new();
+
         // Ustalenie pierwszej i ostatniej daty, które można wybrać
         DateOnly firstDate = DateOnly.FromDateTime(DateTime.Now.AddDays(2)); // Nie można wybrać dzisiejszej daty
         DateOnly lastDate = DateOnly.FromDateTime(DateTime.Now.AddDays(30)); // Nie można wybrać daty późniejszej niż 30 dni od dzisiejszej daty
+
         // Ustalenie godzin pracy firmy
         TimeOnly startTime = new(8, 0, 0); // In future, this should be fetched from the database based on the company working hours 
         TimeOnly endTime = new(16, 0, 0); // In future, this should be fetched from the database based on the company working hours
-
 
 
         for (var i = firstDate; i <= lastDate; i = i.AddDays(1))
@@ -79,15 +113,16 @@ public class AppointmentController : Controller
                 continue;
             }
 
-            List<TimeOnly> availableHours = new();
-            var appointments = _unitOfWork.Appointments.GetAll(u => u.Date == i);
+            List<TimeOnly> availableHours = [];
+            var appointments = _unitOfWork.Appointments.GetAll(u => u.Date == i && u.Service.CompanyId == service.CompanyId, includeProperties: "Service");
 
             //Wszystkie możliwe godziny w danym dniu
             for (var j = startTime; j < endTime; j = j.AddMinutes(15))
             {
                 availableHours.Add(j);
             }
-            // Usunięcie godzin, które są zajęte w danym dniu oraz wyeleminowanie godzin, które nie są 
+            // Usunięcie godzin, które są zajęte w danym dniu
+            // oraz wyeleminowanie godzin, które nie są 
             // dostępne z powodu trwania usługi
             foreach (var appointment in appointments)
             {
@@ -100,6 +135,9 @@ public class AppointmentController : Controller
             //TO DO:  Usunięcie godzin, które nie są dostępne z powodu zbyt krótkiego czasu na wykonanie tej konkretnej usługi (ServiceId)
             // Np. Usługa trwa 60 minut, więc nie można wybrać godziny 15:45, bo nie starczy czasu na wykonanie usługi
             // Np. Usługa trwa 30 minut, a 8:15 jest już zajęta więc nie można się wpisać na godzinę 8:00
+
+
+
 
 
             availableDatesAndHours.Add(i, availableHours);
@@ -123,5 +161,4 @@ public class AppointmentController : Controller
     Klient nie może wybrać godziny, która jest późniejsza niż 30 dni od dzisiejszej daty
     Możliwe godziny do wybrania są co 15 minut zaczynając od 8:00, 8:15, 8:30 itd.  aż do 15:45
     Usługa, blokuje wszystkie godziny w swoim czasie trwania
-
  */

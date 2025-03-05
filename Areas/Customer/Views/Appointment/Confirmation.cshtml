@@ -1,0 +1,59 @@
+﻿@model Appointment
+
+<h1>
+    Confirmation
+</h1>
+<div class="card border-primary shadow">
+    <div class="card-header   pt-3">
+        <div class="container">
+            <div class="row">
+                <div class="col-6">
+                    <h4>@Model.Service.Company.Name</h4>
+                    <h6>Service: </h6>
+                    <p>@Model.Service.Name</p>
+                    <p>
+                        <span class="fw-bold">Description:</span>
+                        <span>@Html.Raw(Model.Service.Description)</span>
+                    </p>
+                </div>
+                <div class="col-3">
+                    @if(Model.Service.IsPrepaymentRequired)
+                    {
+                           <span class="badge bg-warning text-dark text-center">Prepayment required</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-success text-center">No prepayment required</span>
+                    }
+                    <br />
+                    <p>Price: @Model.Service.Price.ToString("C")</p>
+                </div>
+                <div class="col-3 fw-bold">
+                    Date: @Model.Date <br />
+                    Time: @Model.Time - @Model.Time.AddMinutes((int)Model.Service.DurationMinutes.TotalMinutes)
+                </div>
+            </div>
+        </div>
+    </div>
+    <form method="post">
+        <div class="card-body" style="display: none;" >
+            <input asp-for="ServiceId" hidden />
+            <input asp-for="Date" hidden />
+            <input asp-for="Time" hidden />
+            <input asp-for="UserId" hidden />
+            <input asp-for="Status" hidden />
+        </div>
+        <div class="card-footer text-end">
+            @if (Model.Service.IsPrepaymentRequired)
+            {
+                <a asp-area="Customer" asp-action="Confirmed" asp-controller="Appointment" asp-route-Id ="@Model.Id" class="btn btn-outline-info w-auto text-end">Go to payment</a>
+            }
+            else
+            {
+                <a asp-area="Customer" asp-action="Confirmed" asp-controller="Appointment" asp-route-Id="@Model.Id" class="btn btn-outline-success w-auto text-end">Confirm</a>
+            }
+
+        </div>
+    </form>
+
+</div>
