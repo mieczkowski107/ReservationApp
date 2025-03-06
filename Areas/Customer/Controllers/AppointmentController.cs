@@ -35,12 +35,14 @@ public class AppointmentController : Controller
     }
 
     [HttpPost]
-    public IActionResult ConfirmChoice(AppointmentVM appointmentVM)
+    public IActionResult ConfirmChoice(AppointmentVM appointmentVM) 
     {
         if (!ModelState.IsValid)
         {
             return RedirectToAction("Index", appointmentVM);
         }
+        // TO DO: Sprawdzenie czy wybrana data nie jest dzisiejsza ani jutrzejsza oraz czy nie jest późniejsza
+        // niż 30 dni od dzisiejszej daty oraz czy nie jest dniem wolnym oraz czy nie jest to już zajęte
         var appointment = new Appointment
         {
             Date = appointmentVM.SelectedDate,
@@ -55,29 +57,40 @@ public class AppointmentController : Controller
 
     public IActionResult Confirmation(int id)
     {
-        var appointment = _unitOfWork.Appointments.Get(u => u.Id == id, includeProperties: "Service", tracked: false);
+        var appointment = _unitOfWork.Appointments.Get(u => u.Id == id, includeProperties: "Service.Company", tracked: false);
         if(appointment is null)
         {
             return NotFound();
         }
-        appointment.Service.Company = _unitOfWork.Companies.Get(u => u.Id == appointment.Service.CompanyId, tracked: false);
-
         return View(appointment);
     }
 
     public IActionResult Confirmed(int id)
+    {
+        var appointment = _unitOfWork.Appointments.Get(u => u.Id == id, includeProperties: "Service.Company", tracked: false);
+        if (appointment is null)
+        {
+            return NotFound();
+        }
+        appointment.Status = AppointmentStatus.Confirmed;
+        _unitOfWork.Appointments.Update(appointment);
+        _unitOfWork.Save();
+        TempData["success"] = "Your appointment has been confirmed!";
+        return View(appointment);
+    }
+
+    public IActionResult Cancel(int id)
     {
         var appointment = _unitOfWork.Appointments.Get(u => u.Id == id, includeProperties: "Service", tracked: false);
         if (appointment is null)
         {
             return NotFound();
         }
-        appointment.Service.Company = _unitOfWork.Companies.Get(u => u.Id == appointment.Service.CompanyId, tracked: false);
-        appointment.Status = AppointmentStatus.Confirmed;
+        appointment.Status = AppointmentStatus.Cancelled;
         _unitOfWork.Appointments.Update(appointment);
         _unitOfWork.Save();
-        TempData["success"] = "Your appointment has been confirmed!";
-        return View(appointment);
+        TempData["success"] = "Your appointment has been cancelled!";
+        return RedirectToAction(nameof(Index),"Home");
     }
 
     #region APICALLS
@@ -126,6 +139,10 @@ public class AppointmentController : Controller
             // dostępne z powodu trwania usługi
             foreach (var appointment in appointments)
             {
+                if(appointment.Status == AppointmentStatus.Cancelled)
+                {
+                    continue;
+                }
                 var duration = appointment.Service.DurationMinutes.TotalMinutes;
                 var maxTime = appointment.Time.AddMinutes(duration);
                 availableHours.RemoveAll(hour =>
