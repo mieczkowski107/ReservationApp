@@ -24,5 +24,20 @@ namespace ReservationApp.Data.Repository
         {
             _db.SaveChanges();
         }
+
+        public void BeginTransaction()
+        {
+            _db.Database.BeginTransaction();
+        }
+
+        public void CommitTransaction()
+        {
+            _db.Database.CommitTransaction();
+        }
+
+        public void RollbackTransaction()
+        {
+            _db.Database.RollbackTransaction();
+        }
     }
 }
