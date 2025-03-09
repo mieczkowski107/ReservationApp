@@ -1,12 +1,13 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using NuGet.Protocol;
 using ReservationApp.Data.Repository.IRepository;
 using ReservationApp.Models;
 using ReservationApp.Models.ViewModels;
 using ReservationApp.Utility;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace ReservationApp.Areas.Customer.Controllers;
 
@@ -24,7 +25,7 @@ public class AppointmentController : Controller
 
     public IActionResult Index(int? ServiceId)
     {
-        if(ServiceId == null)
+        if (ServiceId == null)
         {
             return NotFound();
         }
@@ -36,14 +37,47 @@ public class AppointmentController : Controller
     }
 
     [HttpPost]
-    public IActionResult ConfirmChoice(AppointmentVM appointmentVM) 
+    public IActionResult ConfirmChoice(AppointmentVM appointmentVM)
     {
         if (!ModelState.IsValid)
         {
             return RedirectToAction("Index", appointmentVM);
         }
-        // TO DO: Sprawdzenie czy wybrana data nie jest dzisiejsza ani jutrzejsza oraz czy nie jest późniejsza
-        // niż 30 dni od dzisiejszej daty oraz czy nie jest dniem wolnym oraz czy nie jest to już zajęte
+
+        if (!appointmentVM.IsValid())
+        {
+            TempData["error"] = "Invalid date or time. Please try again.";
+            return RedirectToAction("Index", appointmentVM);
+        }
+
+        var availableHours = new Dictionary<DateOnly, List<TimeOnly>>();
+
+        #region JsonDeserialize
+        var json = GetDateAndHours(appointmentVM.ServiceId).ToJson();
+        var jsonNode = JsonNode.Parse(json);
+        var valueNode = jsonNode?["Value"];
+
+        if (valueNode != null)
+        {
+            var tempDict = JsonSerializer.Deserialize<Dictionary<string, List<string>>>(valueNode.ToJsonString());
+
+            if (tempDict != null)
+            {
+                availableHours = tempDict.ToDictionary(
+                    kvp => DateOnly.Parse(kvp.Key),
+                    kvp => kvp.Value.Select(time => TimeOnly.Parse(time)).ToList()
+                );
+            }
+        }
+        #endregion
+
+        if (!availableHours[appointmentVM.SelectedDate].Contains(appointmentVM.SelectedTime))
+        {
+            TempData["error"] = "The selected time is not available. Please choose another one.";
+            return RedirectToAction(nameof(Index), new { appointmentVM.ServiceId });
+        }
+
+
         var appointment = new Appointment
         {
             Date = appointmentVM.SelectedDate,
@@ -53,13 +87,13 @@ public class AppointmentController : Controller
         };
         _unitOfWork.Appointments.Add(appointment);
         _unitOfWork.Save();
-        return RedirectToAction(nameof(Confirmation), new {appointment.Id});
+        return RedirectToAction(nameof(Confirmation), new { appointment.Id });
     }
 
     public IActionResult Confirmation(int id)
     {
         var appointment = _unitOfWork.Appointments.Get(u => u.Id == id, includeProperties: "Service.Company", tracked: false);
-        if(appointment is null)
+        if (appointment is null)
         {
             return NotFound();
         }
@@ -73,15 +107,15 @@ public class AppointmentController : Controller
         {
             return NotFound();
         }
-        if(appointment.Status == AppointmentStatus.Pending)
+        if (appointment.Status == AppointmentStatus.Pending)
         {
             TempData["success"] = "Your appointment has been confirmed!";
             appointment.Status = AppointmentStatus.Confirmed;
         }
-            
+
         _unitOfWork.Appointments.Update(appointment);
         _unitOfWork.Save();
-        
+
         return View(appointment);
     }
 
@@ -102,7 +136,7 @@ public class AppointmentController : Controller
     public IActionResult UserAppointments()
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var appointments = _unitOfWork.Appointments.GetAll(u => u.UserId == userId, includeProperties: "Service.Company").OrderByDescending(u=>u.Date).ToList();
+        var appointments = _unitOfWork.Appointments.GetAll(u => u.UserId == userId, includeProperties: "Service.Company").OrderByDescending(u => u.Date).ToList();
         var future = appointments.Where(item => item.Date > DateOnly.FromDateTime(DateTime.UtcNow)).OrderBy(item => item.Date).ToList();
         var past = appointments.Where(item => item.Date <= DateOnly.FromDateTime(DateTime.UtcNow)).OrderByDescending(item => item.Date).ToList();
 
@@ -112,11 +146,9 @@ public class AppointmentController : Controller
     }
 
     #region APICALLS
-    //TO DO: Dodać zabezpieczenie przed wybraniem daty dzisiejszej oraz jutrzejszej
-    //TO DO: Dodać zabezpieczenie przed wybraniem daty późniejszej niż 30 dni od dzisiejszej daty
+
     public IActionResult GetDateAndHours(int? ServiceId)
     {
-        
         if (ServiceId == null)
         {
             return NotFound();
@@ -152,12 +184,13 @@ public class AppointmentController : Controller
             {
                 availableHours.Add(j);
             }
+            List<TimeOnly> busyHours = new(availableHours);
             // Usunięcie godzin, które są zajęte w danym dniu
             // oraz wyeleminowanie godzin, które nie są 
             // dostępne z powodu trwania usługi
             foreach (var appointment in appointments)
             {
-                if(appointment.Status == AppointmentStatus.Cancelled)
+                if (appointment.Status == AppointmentStatus.Cancelled)
                 {
                     continue;
                 }
@@ -167,13 +200,26 @@ public class AppointmentController : Controller
                                             appointment.Time <= hour
                                             && hour < maxTime);
             }
-            //TO DO:  Usunięcie godzin, które nie są dostępne z powodu zbyt krótkiego czasu na wykonanie tej konkretnej usługi (ServiceId)
+
+            //Usunięcie godzin, które nie są dostępne z powodu zbyt krótkiego czasu na wykonanie tej konkretnej usługi (ServiceId)
             // Np. Usługa trwa 60 minut, więc nie można wybrać godziny 15:45, bo nie starczy czasu na wykonanie usługi
             // Np. Usługa trwa 30 minut, a 8:15 jest już zajęta więc nie można się wpisać na godzinę 8:00
+            busyHours = busyHours.Except(availableHours).ToList();
+            int intervalCount = ((int)service.DurationMinutes.TotalMinutes) / 15;
 
-
-
-
+            for (int m = 0; m < availableHours.Count; m++)
+            {
+                var available = availableHours[m];
+                for (int k = 0; k < intervalCount; k++)
+                {
+                    if (busyHours.Contains(available.AddMinutes(15)))
+                    {
+                        availableHours.RemoveAt(m);
+                        m--; // Decrement the index since we've removed an item
+                        break;
+                    }
+                }
+            }
 
             availableDatesAndHours.Add(i, availableHours);
         }
