@@ -2,9 +2,10 @@
 
 public enum AppointmentStatus
 {
-    Pending,
-    Paid,
-    Confirmed,
-    Completed,
-    Cancelled
+    Pending, // Created, not confirmed or awaiting payment
+    Paid,    // Paid, confirmed
+    Confirmed, // Confirmed
+    Completed, // Has taken place and completed
+    NoShow,    // Did not show up
+    Cancelled  // Cancelled
 }
