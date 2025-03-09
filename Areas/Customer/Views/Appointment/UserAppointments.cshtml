@@ -70,7 +70,7 @@
                         {
                             <a asp-controller="Appointment" asp-action="Details" asp-route-id="@item.Id" class="btn btn-primary mx-2 w-auto"> Click to confirm <i class="bi bi-check-lg"></i></a>
                         }
-                        else if (item.Status == AppointmentStatus.Confirmed || item.Status == AppointmentStatus.Cancelled)
+                        else if (item.Status == AppointmentStatus.Confirmed || item.Status == AppointmentStatus.Cancelled || item.Status == AppointmentStatus.NoShow || item.Status == AppointmentStatus.Completed)
                         {
                             <a asp-controller="Appointment" asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-primary mx-2 w-auto"> Details <i class="bi bi-search"></i></a>
                         }
@@ -103,9 +103,11 @@
                 } else if (status === 'Confirmed') {
                     btn.classList.add('btn-outline-success');
                 } else if (status === 'Completed') {
-                    btn.classList.add('btn-outline-dark');
+                    btn.classList.add('btn-success');
                 } else if (status === 'Cancelled') {
                     btn.classList.add('btn-outline-danger');
+                } else if(status === 'NoShow'){
+                    btn.classList.add('btn-outline-info');
                 }
             });
         });
