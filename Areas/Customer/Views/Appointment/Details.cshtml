@@ -1,0 +1,125 @@
+﻿@using ReservationApp.Utility
+@model Appointment
+
+<h1>
+    Appointment details:
+</h1>
+<div class="card border-primary shadow">
+    <div class="card-header   pt-3">
+        <div class="container">
+            <div class="row pt-4 pb-3">
+                <div class="col-6">
+                    <h4 class=" text-primary m-0">
+                        @Model.Service.Company.Name
+                    </h4>
+                </div>
+                <div class="col-6 text-end m-0">
+                    <a asp-controller="Appointment" asp-action="UserAppointments" class="btn btn-outline-primary p-2">Back to list <i class="bi bi-arrow-left"></i> </a>
+                </div>
+            </div>
+        </div>
+        <div class="container">
+            <hr />
+            <div class="row">
+                <div class="col-6 ps-4">
+
+                    <span class="fw-bold">Service:</span>
+                    <p>@Model.Service.Name</p>
+                    <p>
+                        <span class="fw-bold m-0 p-0">Description:</span>
+                        <span>@Html.Raw(Model.Service.Description)</span>
+                    </p>
+                </div>
+                <div class="col-3">
+                    <p class="fw-bold pb-0 m-0">Address:</p>
+                    Address: @Model.Service.Company.Address <br />
+                    Zip-code: @Model.Service.Company.Zip <br />
+                    City: @Model.Service.Company.City
+
+                </div>
+                <div class="col-3 ">
+
+                    <p class="m-0 fw-bold text-dark">Date:</p>
+                    Date: @Model.Date <br />
+                    Time: @Model.Time - @Model.Time.AddMinutes((int)Model.Service.DurationMinutes.TotalMinutes)
+                    <p class="m-0 pt-3 fw-bold text-dark">Price: </p>
+                    @Model.Service.Price.ToString("C")
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <div class="card-footer text-end">
+        <div class="btn status-btn" data-status="@Model.Status" style="pointer-events: none;">
+            @Model.Status
+        </div>
+
+        <!-- Button trigger modal -->
+        @if (Model.Status == AppointmentStatus.Cancelled || Model.Status == AppointmentStatus.Completed)
+        {
+
+        }
+        else
+        {
+            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                Cancel
+            </button>
+        }
+
+
+        <!-- Modal -->
+        <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header text-center">
+                        <h3 class="text-center">
+                            Cancel appointment
+                            <i class="bi bi-x-circle"></i>
+                        </h3>
+                    </div>
+
+                    <div class="modal-body" style="text-align: center;">
+                        <i class="bi bi-exclamation-circle-fill"></i>
+                        Are you sure? <br />
+                        <i class="bi bi-exclamation-circle-fill"></i>
+                        You won't be able to revert this!
+
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <a asp-area="Customer" asp-controller="Appointment" asp-action="Cancel" asp-route-id="@Model.Id" type="button" class="btn btn-danger">Cancel</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts
+{
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Select all buttons with the 'status-btn' class
+            var statusButtons = document.querySelectorAll('.status-btn');
+
+            // Loop through each button and update its class based on the data-status
+            statusButtons.forEach(function (btn) {
+                var status = btn.getAttribute('data-status');
+
+                // Update the button class based on the status
+                if (status === 'Pending') {
+                    btn.classList.add('btn-outline-warning');
+                } else if (status === 'Paid') {
+                    btn.classList.add('btn-outline-primary');
+                } else if (status === 'Confirmed') {
+                    btn.classList.add('btn-outline-success');
+                } else if (status === 'Completed') {
+                    btn.classList.add('btn-outline-dark');
+                } else if (status === 'Cancelled') {
+                    btn.classList.add('btn-outline-danger');
+                }
+            });
+        });
+    </script>
+
+}

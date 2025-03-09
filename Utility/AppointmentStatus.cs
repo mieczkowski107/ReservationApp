@@ -1,11 +1,10 @@
-﻿namespace ReservationApp.Utility
+﻿namespace ReservationApp.Utility;
+
+public enum AppointmentStatus
 {
-    public enum AppointmentStatus
-    {
-        Pending,
-        Paid,
-        Confirmed,
-        Completed,
-        Cancelled
-    }
+    Pending,
+    Paid,
+    Confirmed,
+    Completed,
+    Cancelled
 }
