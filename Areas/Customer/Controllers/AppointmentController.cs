@@ -4,6 +4,7 @@ using ReservationApp.Data.Repository.IRepository;
 using ReservationApp.Models;
 using ReservationApp.Models.ViewModels;
 using ReservationApp.Utility;
+using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 
@@ -65,17 +66,22 @@ public class AppointmentController : Controller
         return View(appointment);
     }
 
-    public IActionResult Confirmed(int id)
+    public IActionResult Details(int id)
     {
         var appointment = _unitOfWork.Appointments.Get(u => u.Id == id, includeProperties: "Service.Company", tracked: false);
         if (appointment is null)
         {
             return NotFound();
         }
-        appointment.Status = AppointmentStatus.Confirmed;
+        if(appointment.Status == AppointmentStatus.Pending)
+        {
+            TempData["success"] = "Your appointment has been confirmed!";
+            appointment.Status = AppointmentStatus.Confirmed;
+        }
+            
         _unitOfWork.Appointments.Update(appointment);
         _unitOfWork.Save();
-        TempData["success"] = "Your appointment has been confirmed!";
+        
         return View(appointment);
     }
 
@@ -90,7 +96,19 @@ public class AppointmentController : Controller
         _unitOfWork.Appointments.Update(appointment);
         _unitOfWork.Save();
         TempData["success"] = "Your appointment has been cancelled!";
-        return RedirectToAction(nameof(Index),"Home");
+        return RedirectToAction(nameof(UserAppointments));
+    }
+
+    public IActionResult UserAppointments()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var appointments = _unitOfWork.Appointments.GetAll(u => u.UserId == userId, includeProperties: "Service.Company").OrderByDescending(u=>u.Date).ToList();
+        var future = appointments.Where(item => item.Date > DateOnly.FromDateTime(DateTime.UtcNow)).OrderBy(item => item.Date).ToList();
+        var past = appointments.Where(item => item.Date <= DateOnly.FromDateTime(DateTime.UtcNow)).OrderByDescending(item => item.Date).ToList();
+
+        // Łączymy posortowane listy (przyszłość rosnąco, przeszłość malejąco)
+        var sortedList = future.Concat(past).ToList();
+        return View(sortedList);
     }
 
     #region APICALLS
