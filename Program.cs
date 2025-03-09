@@ -13,8 +13,10 @@ namespace ReservationApp
     {
         public static void Main(string[] args)
         {
+            
             var builder = WebApplication.CreateBuilder(args);
 
+            #region builder Services
             // Add services to the container.
             builder.Services.AddControllersWithViews();
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -68,6 +70,9 @@ namespace ReservationApp
 
 
             var app = builder.Build();
+
+            #endregion
+
 
             // Configure the HTTP request pipeline.
             if (!app.Environment.IsDevelopment())
