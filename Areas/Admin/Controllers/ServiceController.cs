@@ -12,7 +12,6 @@ namespace ReservationApp.Areas.Admin.Controllers;
 public class ServiceController : Controller
 {
     private readonly IUnitOfWork _unitOfWork;
-    private int companyId;
     public ServiceController(IUnitOfWork unitOfWork)
     {
         _unitOfWork = unitOfWork;
@@ -30,7 +29,7 @@ public class ServiceController : Controller
             return NotFound();
         }
 
-        CompanyServiceVM companyServiceVM = new CompanyServiceVM()
+        CompanyServiceVM companyServiceVM = new()
         {
             Company = company,
             Services = services
@@ -38,7 +37,6 @@ public class ServiceController : Controller
         return View(companyServiceVM);
     }
 
-    //TO DO: Add Upsert method 
     public IActionResult Upsert(int? ServiceId, int? CompanyId)
     {
         if (ServiceId == null || ServiceId == 0)
