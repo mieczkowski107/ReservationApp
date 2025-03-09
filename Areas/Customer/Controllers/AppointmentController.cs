@@ -114,7 +114,7 @@ public class AppointmentController : Controller
     #region APICALLS
     //TO DO: Dodać zabezpieczenie przed wybraniem daty dzisiejszej oraz jutrzejszej
     //TO DO: Dodać zabezpieczenie przed wybraniem daty późniejszej niż 30 dni od dzisiejszej daty
-    public IActionResult GetDateAndHours(int ServiceId)
+    public IActionResult GetDateAndHours(int? ServiceId)
     {
         
         if (ServiceId == null)
