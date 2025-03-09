@@ -165,7 +165,7 @@ namespace ReservationApp.Areas.Identity.Pages.Account
                 if (result.Succeeded)
                 {
                     _logger.LogInformation("User created a new account with password.");
-                    if(Input.Role != null)
+                    if(Input.Role != null && User.IsInRole(Enum.GetName(Role.Admin)))
                     {
                         await _userManager.AddToRoleAsync(user, Input.Role.ToString());
                     }
