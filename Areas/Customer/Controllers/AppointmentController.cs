@@ -135,14 +135,7 @@ public class AppointmentController : Controller
 
     public IActionResult UserAppointments()
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var appointments = _unitOfWork.Appointments.GetAll(u => u.UserId == userId, includeProperties: "Service.Company").OrderByDescending(u => u.Date).ToList();
-        var future = appointments.Where(item => item.Date > DateOnly.FromDateTime(DateTime.UtcNow)).OrderBy(item => item.Date).ToList();
-        var past = appointments.Where(item => item.Date <= DateOnly.FromDateTime(DateTime.UtcNow)).OrderByDescending(item => item.Date).ToList();
-
-        // Łączymy posortowane listy (przyszłość rosnąco, przeszłość malejąco)
-        var sortedList = future.Concat(past).ToList();
-        return View(sortedList);
+        return View();
     }
 
     #region APICALLS
@@ -224,6 +217,18 @@ public class AppointmentController : Controller
             availableDatesAndHours.Add(i, availableHours);
         }
         return Json(availableDatesAndHours);
+    }
+
+    public IActionResult GetUserAppointments()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var appointments = _unitOfWork.Appointments.GetAll(u => u.UserId == userId, includeProperties: "Service.Company").OrderByDescending(u => u.Date).ToList();
+        var future = appointments.Where(item => item.Date > DateOnly.FromDateTime(DateTime.UtcNow)).OrderBy(item => item.Date).ToList();
+        var past = appointments.Where(item => item.Date <= DateOnly.FromDateTime(DateTime.UtcNow)).OrderByDescending(item => item.Date).ToList();
+
+        // Łączymy posortowane listy (przyszłość rosnąco, przeszłość malejąco)
+        var sortedList = future.Concat(past).ToList();
+        return Json( new { data = sortedList });
     }
     #endregion
 
