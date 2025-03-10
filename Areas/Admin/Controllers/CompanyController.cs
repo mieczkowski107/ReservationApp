@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using ReservationApp.Data.Repository.IRepository;
 using ReservationApp.Models;
@@ -8,13 +9,16 @@ using ReservationApp.Models.ViewModels;
 namespace ReservationApp.Areas.Admin.Controllers;
 
 [Area("Admin")]
+[Authorize(Roles = "Admin,CompanyManager")]
 public class CompanyController : Controller
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IWebHostEnvironment _hostEnvironment;
 
-    public CompanyController(IUnitOfWork unitOfWork)
+    public CompanyController(IUnitOfWork unitOfWork, IWebHostEnvironment hostEnvironment)
     {
         _unitOfWork = unitOfWork;
+        _hostEnvironment = hostEnvironment;
     }
 
     public IActionResult Index()
@@ -34,34 +38,58 @@ public class CompanyController : Controller
                 Value = i.Id.ToString()
             })
         };
-        if (id == null)
+        if (id == null || id == 0)
         {
             return View(companyVm);
         }
-
-        companyVm.Company = _unitOfWork.Companies.Get(c => c.Id == id);
-
-        if (companyVm.Company == null)
+        else
         {
-            return NotFound();
+            companyVm.Company = _unitOfWork.Companies.Get(c => c.Id == id);
+            if (companyVm.Company == null)
+            {
+                return NotFound();
+            }
+            return View(companyVm);
         }
-        return View(companyVm);
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult Upsert(Company? company)
+    public IActionResult Upsert(CompanyVM companyVm, IFormFile? file)
     {
         if (ModelState.IsValid)
         {
-            if (company?.Id == 0 || company?.Id == null)
+            string wwwRootPath = _hostEnvironment.WebRootPath;
+            if (file != null)
             {
-                _unitOfWork.Companies.Add(company!);
+                string fileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName); 
+                string imgPath = Path.Combine(wwwRootPath, @"images\company");
+                if(!string.IsNullOrEmpty(companyVm?.Company.ImageUrl))
+                {
+                    string oldImagePath = Path.Combine(wwwRootPath, companyVm.Company.ImageUrl.TrimStart('\\'));
+                    if (System.IO.File.Exists(oldImagePath))
+                    {
+                        System.IO.File.Delete(oldImagePath);
+                    }
+                }
+                using (var fileStream = new FileStream(Path.Combine(imgPath, fileName), FileMode.Create))
+                {
+                    file.CopyTo(fileStream);
+                }
+                companyVm!.Company.ImageUrl = @"\images\company\" + fileName;
+            }
+            else if(companyVm.Company.ImageUrl == null)
+            {
+                companyVm.Company.ImageUrl = @"\images\company\Temporary.jpg";
+            }
+            if (companyVm?.Company.Id == 0 || companyVm?.Company.Id == null)
+            {
+                _unitOfWork.Companies.Add(companyVm!.Company!);
                 TempData["success"] = "Company added successfully!";
             }
             else
             {
-                _unitOfWork.Companies.Update(company);
+                _unitOfWork.Companies.Update(companyVm.Company);
                 TempData["success"] = "Company updated successfully!";
             }
             _unitOfWork.Save();
@@ -70,7 +98,7 @@ public class CompanyController : Controller
         else
         {
             TempData["error"] = "Something went wrong!";
-            return RedirectToAction(nameof(Upsert), new { company?.Id });
+            return RedirectToAction(nameof(Upsert), new { companyVm?.Company.Id });
             /*return View(company);*/
         }
     }

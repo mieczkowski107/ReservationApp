@@ -8,7 +8,7 @@ using ReservationApp.Models.ViewModels;
 namespace ReservationApp.Areas.Admin.Controllers;
 
 [Area("Admin")]
-[Authorize]
+[Authorize(Roles = "Admin,CompanyManager")]
 public class ServiceController : Controller
 {
     private readonly IUnitOfWork _unitOfWork;

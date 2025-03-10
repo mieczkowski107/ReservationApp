@@ -43,7 +43,7 @@
                         @item.Name
                     </td>
                     <td>
-                       Address: @item.Address <br />
+                        Address: @item.Address <br />
                         City: @item.City<br />
                         State: @item.State<br />
                         Zip: @item.Zip<br />
@@ -60,9 +60,8 @@
                             <a asp-controller="Service" asp-action="Index" asp-route-Id="@item.Id" class="btn btn-info mx-1 w-auto"> Services <i class="bi bi-boxes"></i></a>
                             <a asp-controller="Company" asp-action="Upsert" asp-route-Id="@item.Id" class="btn btn-primary mx-1 w-auto"> <i class="bi bi-pencil-square"></i></a>
                             <a asp-controller="Company" asp-action="Delete" asp-route-Id="@item.Id" class="btn btn-danger mx-1 w-auto"> <i class="bi bi-trash-fill"></i></a>
-                            
-                        </div>
 
+                        </div>
                     </td>
                 </tr>
             }
