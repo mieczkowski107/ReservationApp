@@ -37,7 +37,8 @@ public class ApplicationDbContext : IdentityDbContext<IdentityUser>
                 Phone = "123-456-7890",
                 Email = "ink@gmail.com",
                 CategoryId = 1,
-                Description = "Tattoo Description"
+                Description = "Tattoo Description",
+                ImageUrl = @"\images\compnay\Temporary.jpg"
             },
             new Company
             {
@@ -50,7 +51,8 @@ public class ApplicationDbContext : IdentityDbContext<IdentityUser>
                 Phone = "123-456-7890",
                 Email = "barber@gmail.com",
                 CategoryId = 2,
-                Description = "Barber Shop Description"
+                Description = "Barber Shop Description",
+                ImageUrl = @"\images\compnay\Temporary.jpg"
             },
             new Company
             {
@@ -63,7 +65,8 @@ public class ApplicationDbContext : IdentityDbContext<IdentityUser>
                 Phone = "123-456-7890",
                 Email = "physio@gmail.com",
                 CategoryId = 3,
-                Description = "Physiotherapy Clinic Description"
+                Description = "Physiotherapy Clinic Description",
+                ImageUrl = @"\images\compnay\Temporary.jpg"
             });
 
         modelBuilder.Entity<Service>().HasData(
