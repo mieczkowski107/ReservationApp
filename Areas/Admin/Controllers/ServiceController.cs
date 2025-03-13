@@ -93,8 +93,10 @@ public class ServiceController : Controller
         }
         return View(service);
     }
+    
     [HttpPost]
-    public IActionResult Delete(int id)
+    [ActionName("Delete")]
+    public IActionResult DeletePOST(int? id)
     {
         if (id == null)
         {

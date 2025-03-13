@@ -115,7 +115,7 @@ public class RegisterModel : PageModel
         [Display(Name = "Phone Number")]
         [Phone]
         public string PhoneNumber { get; set; }
-        public DateOnly? DateOfBirth { get; set; }
+        public DateOnly DateOfBirth { get; set; }
 
         public Role? Role { get; set; }
         public IEnumerable<SelectListItem> RoleList { get; set; }

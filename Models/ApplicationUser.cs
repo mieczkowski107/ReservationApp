@@ -9,15 +9,15 @@ namespace ReservationApp.Models
 
         [Required]
         [Display(Name = "First Name")]
-        public string FirstName { get; set; }
+        public string? FirstName { get; set; }
         [Required]
         [Display(Name = "Last Name")]
-        public string LastName { get; set; }
+        public string? LastName { get; set; }
 
         [Required]
         [Display(Name = "Phone Number")]
         [Phone]
-        public string PhoneNumber
+        public override string? PhoneNumber
         { get
             {
                 return base.PhoneNumber;
@@ -30,7 +30,8 @@ namespace ReservationApp.Models
         }
 
         [Display(Name = "Date of Birth")]
-        public DateOnly? DateOfBirth { get; set; }
+        [Required]
+        public DateOnly DateOfBirth { get; set; }
         
     }
 }
