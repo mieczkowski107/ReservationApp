@@ -2,7 +2,7 @@
 @model List<Service>
 
 <div class="card border-primary">
-    <div class="card-header shadow  bg-primary pt-3">
+    <div class="card-header shadow  bg-primary pt-2">
         <h3 class="text-white text-center ">@Model[0].Company.Name</h3>
 
         <h5 class="text-white text-center">Available services:</h5>
@@ -12,13 +12,43 @@
             <div class="px-5">
                 <p class="fw-bold m-0 display-6">About us:</p>
                 @Html.Raw(Model[0].Company.Description)
+                <div class="container">
+                    <div class="row">
+                        <span class="col-6 text-center">
+                            <h3>
+                                Address
+                            </h3>
+                            <ul class="list-unstyled text-center p-0">
+                                <li class="p-0">
+                                    @Model[0].Company.Address,
+                                </li>
+                                <li>
+                                    @Model[0].Company.City, @Model[0].Company.Zip
+                                </li>
+                            </ul>
+                        </span>
+                        <span class="col-6">
+                            <h3 class="text-center">
+                                Contact
+                            </h3>
+                            <ul class="list-unstyled text-center p-0">
+                                <li class="p-0">
+                                    @Model[0].Company.Phone, 
+                                </li>
+                                <li>
+                                    @Model[0].Company.Email
+                                </li>
+                            </ul>
+                        </span>
+                    </div>
+                </div>
             </div>
         </span>
     </p>
-    <hr class="m-0 pb-3"/>
+    <hr class="m-0 pb-3" />
     @foreach (var item in Model)
     {
-        <div class="card-body p-3 border-primary" >
+        <div class="card-body p-3 border-primary">
             <div class="card mb-3 border-primary">
                 <div class="card-header shadow border-primary">
                     <div class="container">
@@ -27,7 +57,7 @@
                                 <h3>@item.Name</h3>
                             </div>
                             <div class="col-6  text-end">
-                                <a asp-area="Customer" asp-controller="Appointment" asp-action="Index"  asp-route-ServiceId = "@item.Id"  class="btn btn-info text-end" >
+                                <a asp-area="Customer" asp-controller="Appointment" asp-action="Index" asp-route-ServiceId="@item.Id" class="btn btn-info text-end">
                                     Book <i class="bi bi-bookmark"></i>
                                 </a>
                             </div>
@@ -64,8 +94,8 @@
         </div>
     }
 
-   
-   
+
+
 </div>
 
 
