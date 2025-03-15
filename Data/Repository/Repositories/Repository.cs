@@ -15,7 +15,7 @@ namespace ReservationApp.Data.Repository.Repositories
         }
         public void Add(T entity)
         {
-            dbSet.AddAsync(entity);
+            dbSet.Add(entity);
         }
 
         public void Remove(T entity)
@@ -48,7 +48,7 @@ namespace ReservationApp.Data.Repository.Repositories
             IQueryable<T> query = tracked ? dbSet : dbSet.AsNoTracking();
             if (filter != null)
             {
-                query = dbSet.Where(filter);
+                query = query.Where(filter);
             }
             
             if (!string.IsNullOrEmpty(includeProperties))
