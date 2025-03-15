@@ -10,8 +10,9 @@
         </div>
     </div>
     <div class="card-body p-4">
-        <form method="post" class="row" enctype="multipart/form-data">
+        <form method="post" class="row" enctype="multipart/form-data" asp-area="Admin" asp-controller="Service" asp-action="Upsert" >
             <input asp-for="Id" hidden />
+            <input asp-for="CompanyId" hidden />
             <div class="row">
                 <div class="col-12">
                     <div class="border p-3">

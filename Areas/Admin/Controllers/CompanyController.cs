@@ -4,6 +4,10 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using ReservationApp.Data.Repository.IRepository;
 using ReservationApp.Models;
 using ReservationApp.Models.ViewModels;
+using ReservationApp.Services;
+using ReservationApp.Utility;
+using System.Linq;
+using System.Security.Claims;
 
 
 namespace ReservationApp.Areas.Admin.Controllers;
@@ -23,12 +27,41 @@ public class CompanyController : Controller
 
     public IActionResult Index()
     {
-        var companies = _unitOfWork.Companies.GetAll(includeProperties: "Category").ToList();
+        List<Company> companies = new();
+        if (User.IsInRole(Enum.GetName(Role.Admin)!))
+        {
+            companies = _unitOfWork.Companies.GetAll(includeProperties: "Category").ToList();
+
+        }
+        else if (User.IsInRole(Enum.GetName(Role.CompanyManager)!))
+        {
+            Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid ownerId);
+            companies = _unitOfWork.Companies.GetAll(u => u.OwnerId == ownerId, includeProperties: "Category").ToList();
+        }
         return View(companies);
     }
 
     public IActionResult Upsert(int? id)
     {
+        if (!RoleService.IsAdmin(User))
+        {
+            Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid userId);
+            var userCompanies = _unitOfWork.Companies.GetAll(u => u.OwnerId == userId).Select(c => c.Id);
+            if(id.HasValue)
+            {
+                if (!userCompanies.Contains(id.Value))
+                {
+                    return Forbid();
+                }
+            }
+            else
+            {
+                //TODO: Add logic to check if user is owner of company and has access to Create or Edit
+                // Probably need to add field in User table to check if user can create company if id is null
+                // Or check if user is owner of company and has access to edit
+            }
+
+        }
         var companyVm = new CompanyVM()
         {
             Company = new Company(),
@@ -62,9 +95,9 @@ public class CompanyController : Controller
             string wwwRootPath = _hostEnvironment.WebRootPath;
             if (file != null)
             {
-                string fileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName); 
+                string fileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
                 string imgPath = Path.Combine(wwwRootPath, @"images\company");
-                if(!string.IsNullOrEmpty(companyVm?.Company.ImageUrl))
+                if (!string.IsNullOrEmpty(companyVm?.Company?.ImageUrl))
                 {
                     string oldImagePath = Path.Combine(wwwRootPath, companyVm.Company.ImageUrl.TrimStart('\\'));
                     if (System.IO.File.Exists(oldImagePath))
@@ -76,12 +109,19 @@ public class CompanyController : Controller
                 {
                     file.CopyTo(fileStream);
                 }
-                companyVm!.Company.ImageUrl = @"\images\company\" + fileName;
+                companyVm!.Company!.ImageUrl = @"\images\company\" + fileName;
             }
-            else if(companyVm.Company.ImageUrl == null)
+            else if (companyVm!.Company!.ImageUrl == null)
             {
                 companyVm.Company.ImageUrl = @"\images\company\Temporary.jpg";
             }
+
+            if (companyVm.Company.OwnerId == null && User.IsInRole(Enum.GetName(Role.CompanyManager)!))
+            {
+                Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid ownerId);
+                companyVm.Company.OwnerId = ownerId;
+            }
+
             if (companyVm?.Company.Id == 0 || companyVm?.Company.Id == null)
             {
                 _unitOfWork.Companies.Add(companyVm!.Company!);
@@ -98,13 +138,25 @@ public class CompanyController : Controller
         else
         {
             TempData["error"] = "Something went wrong!";
-            return RedirectToAction(nameof(Upsert), new { companyVm?.Company.Id });
-            /*return View(company);*/
+            return RedirectToAction(nameof(Upsert), new { companyVm?.Company?.Id });
         }
     }
 
     public IActionResult Delete(int? id)
     {
+        if(id == null)
+        {
+            return NotFound();
+        }
+        if (!RoleService.IsAdmin(User))
+        {
+            Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid userId);
+            var userCompanies = _unitOfWork.Companies.GetAll(u => u.OwnerId == userId).Select(c => c.Id);
+            if (!userCompanies.Contains(id.Value))
+            {
+                return Forbid();
+            }
+        }
         if (id == null)
         {
             return NotFound();
@@ -120,12 +172,20 @@ public class CompanyController : Controller
     [HttpPost]
     public IActionResult Delete(int id)
     {
+        if (!RoleService.IsAdmin(User))
+        {
+            Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid userId);
+            var userCompanies = _unitOfWork.Companies.GetAll(u => u.OwnerId == userId).Select(c => c.Id);
+            if (!userCompanies.Contains(id))
+            {
+                return Forbid();
+            }
+        }
         var objFromDb = _unitOfWork.Companies.Get(c => c.Id == id, includeProperties: nameof(Category));
         if (objFromDb == null)
         {
             TempData["error"] = "Error while deleting company";
             return RedirectToAction(nameof(Index));
-            //return Json(new { success = false, message = "Error while deleting" });
         }
         _unitOfWork.Companies.Remove(objFromDb);
         _unitOfWork.Save();
@@ -138,9 +198,22 @@ public class CompanyController : Controller
     [HttpGet]
     public IActionResult GetAll()
     {
-        var allObj = _unitOfWork.Companies.GetAll();
-        return Json(new { data = allObj });
+        if (User.IsInRole(Enum.GetName(Role.Admin)!))
+        {
+            var allObj = _unitOfWork.Companies.GetAll();
+            return Json(new { data = allObj });
+        }
+        else if (User.IsInRole(Enum.GetName(Role.CompanyManager)!))
+        {
+            Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid ownerId);
+            var allObj = _unitOfWork.Companies.GetAll(c => c.OwnerId == ownerId);
+            return Json(new { data = allObj });
+        }
+        else
+        {
+            return Json(new { data = "" });
+        }
     }
-    
+
     #endregion
 }
