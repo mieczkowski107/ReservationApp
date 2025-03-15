@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Configuration;
 
 namespace ReservationApp.Models;
 
@@ -10,37 +11,47 @@ public class Company
     public int Id { get; set; }
     [Required]
     [MaxLength(255)]
-    public string Name { get; set; }
+    public string? Name { get; set; }
 
     [Required]
     [MaxLength(255)]    
-    public string Address { get; set; }
+    public string? Address { get; set; }
     [Required]
     [MaxLength(255)]
     [RegularExpression(@"^[a-zA-Z\s]*$", ErrorMessage = "Invalid city name. Only letters and spaces are allowed.")]
-    public string City { get; set; }
+    public string? City { get; set; }
     [Required]
     [MaxLength(255)]
     [RegularExpression(@"^[a-zA-Z\s]*$", ErrorMessage = "Invalid city name. Only letters and spaces are allowed.")]
-    public string State { get; set; }
+    public string? State { get; set; }
     [Required]
     [RegularExpression(@"^\d{2}-\d{3}$", ErrorMessage = "Invalid ZIP code format. Expected format: XX-XXX.")]
-    public string Zip { get; set; }
+    public string? Zip { get; set; }
     [Required]
     [Phone] 
-    public string Phone { get; set; }
+    public string? Phone { get; set; }
     [Required]
     [EmailAddress]
-    public string Email { get; set; }
+    public string? Email { get; set; }
 
     public int CategoryId { get; set; }
     [ForeignKey("CategoryId")]
     [ValidateNever]
-    public Category Category { get; set; }
+    public Category? Category { get; set; }
 
     [Required]
-    public string Description { get; set; }
+    public string? Description { get; set; }
         
     [ValidateNever]
     public string? ImageUrl { get; set; }
+
+    public Guid? OwnerId { get; set; }
+
+    [ForeignKey("OwnerId")]
+    [ValidateNever]
+    ApplicationUser? Owner { get; set; }
+    
+
+
+
 }

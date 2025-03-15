@@ -49,7 +49,7 @@ public class CategoryController : Controller
         {
             if (category?.Id == 0 || category?.Id == null)
             {
-                _unitOfWork.Categories.Add(category);
+                _unitOfWork.Categories.Add(category!);
                 TempData["success"] = "Category added succesffuly!";
             }
             else
@@ -91,7 +91,7 @@ public class CategoryController : Controller
             return RedirectToAction(nameof(Index));
             //return Json(new { success = false, message = "Error while deleting" });
         }
-        if(companies.Count() <= 0)
+        if(!companies.Any())
         {
             _unitOfWork.Categories.Remove(objFromDb);
             _unitOfWork.Save();

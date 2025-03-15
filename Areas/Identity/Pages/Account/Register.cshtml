@@ -6,7 +6,7 @@
     <div class="card-header ml-0 py-4 bg-primary">
         <div class="row">
             <div class="col-12 text-center">
-                @if (User.IsInRole(Enum.GetName(Role.Admin)))
+                @if (User.IsInRole(Role.Admin.ToString()))
                 {
                     <h2 class="py-2 text-white">Register - ADMIN PORTAL</h2>
                 }
@@ -59,7 +59,7 @@
                         <label asp-for="Input.ConfirmPassword">Confirm Password</label>
                         <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
                     </div>
-                    @if (User.IsInRole(Enum.GetName(Role.Admin)))
+                    @if (User.IsInRole(Role.Admin.ToString()))
                     {
                         <div class="form-floating mb-3 col-md-6">
                             <select asp-for="Input.Role" asp-items="@Model.Input.RoleList" class="form-select">
@@ -72,7 +72,7 @@
 
 
             </div>
-            @if (!User.IsInRole(Enum.GetName(Role.Admin)))
+            @if (User.IsInRole(Role.Admin.ToString()))
             {
                 <div class="col-md-12 p-3 text-center">
                     <section>
