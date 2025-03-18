@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
-namespace ReservationApp.Utility
+namespace ReservationApp.Utility.Enums
 {
     public enum Role
     {

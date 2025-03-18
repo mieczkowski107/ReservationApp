@@ -33,23 +33,18 @@
         <div class="container mt-4">
             <h2 class="text-center mb-3">Choose date and hour</h2>
 
-            <!-- Wybór daty -->
             <div id="date-container" class="d-flex overflow-auto gap-2 p-2"></div>
 
-            <!-- Kontener na godziny -->
             <div id="time-container" class="mt-4">
                 <h4 id="selected-date-title" class="text-center">Available hours:</h4>
                 <div id="time-scroll" class="d-flex gap-2 mt-3 p-2"
                      style="overflow-x: auto; white-space: nowrap; scroll-behavior: smooth;"></div>
             </div>
 
-          
-            <!-- Formularz do wysyłania wyboru z wykorzystaniem atrybutów ASP.NET Core -->
             <form id="appointment-form" method="post" 
                   asp-area="Customer"
                   asp-controller="Appointment"
                   asp-action="ConfirmChoice">
-                <!-- Ukryte pola do przechowywania wyboru -->
                 <input asp-for="ServiceId" type="hidden" name="ServiceId" value="@Model.ServiceId" />
                 @* <input asp-for="UserId" type="hidden" name="UserId" value="@Model.UserId" /> *@
                 <input asp-for="SelectedDate" type="hidden" id="selected-date" name="selectedDate" />
@@ -81,13 +76,11 @@
 
             let availableDates = {};
 
-            // Pobieranie ServiceId z URL-a
             function getServiceIdFromUrl() {
                 const urlParams = new URLSearchParams(window.location.search);
                 return urlParams.get("ServiceId");
             }
 
-            // Pobranie dostępnych godzin dla usługi
             function fetchAvailableDates(serviceId) {
                 if (!serviceId) {
                     console.error("Brak ServiceId w URL!");
@@ -102,7 +95,6 @@
                     .catch(error => console.error("Błąd pobierania dostępnych godzin:", error));
             }
 
-            // Renderowanie dostępnych dat
             function renderDates() {
                 dateContainer.innerHTML = "";
                 timeContainer.innerHTML = "";
@@ -147,8 +139,8 @@
                         button.addEventListener("click", () => {
                             document.querySelectorAll(".time-tile").forEach(btn => btn.classList.replace("btn-primary", "btn-outline-primary"));
                             button.classList.replace("btn-outline-primary", "btn-primary");
-                            selectedTimeInput.value = time;  // Ustawienie wartości godziny w ukrytym polu
-                            submitBtn.disabled = false; // Aktywacja przycisku, gdy wybrano godzinę
+                            selectedTimeInput.value = time;  
+                            submitBtn.disabled = false; 
                         });
 
                         timeContainer.appendChild(button);
@@ -156,7 +148,6 @@
                 }
             }
 
-            // Pobranie ServiceId i załadowanie dat
             const serviceId = getServiceIdFromUrl();
             if (serviceId) {
                 fetchAvailableDates(serviceId);
@@ -164,13 +155,12 @@
                 console.error("Brak ServiceId w URL!");
             }
 
-            // Obsługa zatwierdzenia wyboru (przed wysłaniem formularza)
             appointmentForm.addEventListener("submit", function (event) {
                 if (!selectedDateInput.value || !selectedTimeInput.value) {
-                    event.preventDefault(); // Zapobiegnij wysłaniu formularza
+                    event.preventDefault(); 
                     alert("Choose date and hour!");
                 } else {
-                    // Ustawienie wartości w formularzu przed jego wysłaniem
+
                     selectedDateInput.value = selectedDateInput.value;
                     selectedTimeInput.value = selectedTimeInput.value;
                 }

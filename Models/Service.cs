@@ -13,10 +13,10 @@ namespace ReservationApp.Models
         [Required]
         public int Id { get; set; }
         [Required]
-        public string Name { get; set; }
+        public string? Name { get; set; }
         
         [Required]
-        public string Description { get; set; }
+        public string? Description { get; set; }
         [Required]
         public decimal Price { get; set; }
         [Required]
@@ -26,8 +26,6 @@ namespace ReservationApp.Models
         public bool IsPrepaymentRequired { get; set; }
 
         public int CompanyId { get; set; }
-
-        
 
         [ForeignKey("CompanyId")]
         [ValidateNever]

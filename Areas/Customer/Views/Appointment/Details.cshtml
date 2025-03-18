@@ -1,15 +1,16 @@
 ﻿@using ReservationApp.Utility
+@using ReservationApp.Utility.Enums
 @model Appointment
 
-<h1>
+<h3 class="p-2">
     Appointment details:
-</h1>
+</h3>
 <div class="card border-primary shadow">
     <div class="card-header   pt-3">
         <div class="container">
-            <div class="row pt-4 pb-3">
-                <div class="col-6">
-                    <h4 class=" text-primary m-0">
+            <div class="row pt-2 pb-0 align-items-center ">
+                <div class="col-6 ">
+                    <h4 class=" text-primary m-0 px-3">
                         @Model.Service.Company.Name
                     </h4>
                 </div>
@@ -53,19 +54,12 @@
         <div class="btn status-btn" data-status="@Model.Status" style="pointer-events: none;">
             @Model.Status
         </div>
-
-        <!-- Button trigger modal -->
-        @if (Model.Status == AppointmentStatus.Cancelled || Model.Status == AppointmentStatus.Completed || Model.Status == AppointmentStatus.NoShow)
-        {
-            
-        }
-        else
+        @if(Model.Status == AppointmentStatus.Pending || Model.Status == AppointmentStatus.Paid || Model.Status == AppointmentStatus.Confirmed)
         {
             <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#exampleModal">
                 Cancel
             </button>
         }
-        <!-- Modal -->
         <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
@@ -97,14 +91,12 @@
 {
     <script>
         document.addEventListener("DOMContentLoaded", function () {
-            // Select all buttons with the 'status-btn' class
+            
             var statusButtons = document.querySelectorAll('.status-btn');
 
-            // Loop through each button and update its class based on the data-status
             statusButtons.forEach(function (btn) {
                 var status = btn.getAttribute('data-status');
 
-                // Update the button class based on the status
                  if (status === 'Pending') {
                     btn.classList.add('btn-outline-warning');
                 } else if (status === 'Paid') {

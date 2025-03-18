@@ -20,7 +20,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
 using ReservationApp.Models;
-using ReservationApp.Utility;
+using ReservationApp.Utility.Enums;
 
 namespace ReservationApp.Areas.Identity.Pages.Account;
 

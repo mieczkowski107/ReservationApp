@@ -1,5 +1,6 @@
 ﻿using ReservationApp.Data;
 using ReservationApp.Data.Repository.IRepository;
+using ReservationApp.Utility.Enums;
 
 namespace ReservationApp.Services;
 
@@ -23,14 +24,14 @@ public class AppointmentStatusService : BackgroundService
             foreach (var appointment in pastAppointments)
             {
                 // If the appointment is not confirmed or paid, it is considered to be cancelled
-                if (appointment.Status == Utility.AppointmentStatus.Pending)
+                if (appointment.Status == AppointmentStatus.Pending)
                 {
-                    appointment.Status = Utility.AppointmentStatus.Cancelled;
+                    appointment.Status = AppointmentStatus.Cancelled;
                 }
                 // By default, if the company does not mark as a no-show, it is considered to be done
-                else if (appointment.Status == Utility.AppointmentStatus.Confirmed)
+                else if (appointment.Status == AppointmentStatus.Confirmed)
                 {
-                    appointment.Status = Utility.AppointmentStatus.Completed;
+                    appointment.Status = AppointmentStatus.Completed;
                 }
                 _unitOfWork.Appointments.Update(appointment);
             }
@@ -38,10 +39,10 @@ public class AppointmentStatusService : BackgroundService
             DateTime dateNow = DateTime.UtcNow;
             foreach (var appointment in _unitOfWork.Appointments.GetAll(u => u.CreatedAt.Date == dateNow.Date))
             {
-                if (appointment.Status == Utility.AppointmentStatus.Pending && ((dateNow - appointment.CreatedAt).TotalMinutes > TimeSpan.FromMinutes(15).TotalMinutes))
+                if (appointment.Status == AppointmentStatus.Pending && ((dateNow - appointment.CreatedAt).TotalMinutes > TimeSpan.FromMinutes(15).TotalMinutes))
                 {
-                    appointment.Status = Utility.AppointmentStatus.Cancelled;
-                    _unitOfWork.Appointments.Update(appointment);
+                    appointment.Status = AppointmentStatus.Cancelled;
+                    _unitOfWork.Appointments.Remove(appointment);
                 }
             }
             _unitOfWork.Save();

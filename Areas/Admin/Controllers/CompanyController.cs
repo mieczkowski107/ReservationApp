@@ -5,7 +5,7 @@ using ReservationApp.Data.Repository.IRepository;
 using ReservationApp.Models;
 using ReservationApp.Models.ViewModels;
 using ReservationApp.Services;
-using ReservationApp.Utility;
+using ReservationApp.Utility.Enums;
 using System.Linq;
 using System.Security.Claims;
 

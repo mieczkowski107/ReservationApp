@@ -1,10 +1,11 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Azure.Identity;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NuGet.Protocol;
 using ReservationApp.Data.Repository.IRepository;
 using ReservationApp.Models;
 using ReservationApp.Models.ViewModels;
-using ReservationApp.Utility;
+using ReservationApp.Utility.Enums;
 using System.Security.Claims;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -17,7 +18,6 @@ public class AppointmentController : Controller
 {
     private readonly IUnitOfWork _unitOfWork;
     public AppointmentVM AppointmentVM { get; set; }
-    //public Appointment Appointment { get; set; }
     public AppointmentController(IUnitOfWork unitOfWork)
     {
         _unitOfWork = unitOfWork;
@@ -92,17 +92,34 @@ public class AppointmentController : Controller
 
     public IActionResult Confirmation(int id)
     {
-        var appointment = _unitOfWork.Appointments.Get(u => u.Id == id, includeProperties: "Service.Company", tracked: false);
+        string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+       
+        var appointment = _unitOfWork.Appointments.Get(u => u.Id == id && u.UserId == userId, includeProperties: "Service.Company", tracked: false);
         if (appointment is null)
         {
             return NotFound();
         }
         return View(appointment);
     }
+    public IActionResult Cancel(int id)
+    {
+        string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var appointment = _unitOfWork.Appointments.Get(u => u.Id == id && u.UserId == userId, includeProperties: "Service", tracked: false);
+        if (appointment is null)
+        {
+            return NotFound();
+        }
+        appointment.Status = AppointmentStatus.Cancelled;
+        _unitOfWork.Appointments.Update(appointment);
+        _unitOfWork.Save();
+        TempData["success"] = "Your appointment has been cancelled!";
+        return RedirectToAction(nameof(UserAppointments));
+    }
 
     public IActionResult Details(int id)
     {
-        var appointment = _unitOfWork.Appointments.Get(u => u.Id == id, includeProperties: "Service.Company", tracked: false);
+        string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var appointment = _unitOfWork.Appointments.Get(u => u.Id == id && u.UserId == userId, includeProperties: "Service.Company", tracked: false);
         if (appointment is null)
         {
             return NotFound();
@@ -117,20 +134,6 @@ public class AppointmentController : Controller
         _unitOfWork.Save();
 
         return View(appointment);
-    }
-
-    public IActionResult Cancel(int id)
-    {
-        var appointment = _unitOfWork.Appointments.Get(u => u.Id == id, includeProperties: "Service", tracked: false);
-        if (appointment is null)
-        {
-            return NotFound();
-        }
-        appointment.Status = AppointmentStatus.Cancelled;
-        _unitOfWork.Appointments.Update(appointment);
-        _unitOfWork.Save();
-        TempData["success"] = "Your appointment has been cancelled!";
-        return RedirectToAction(nameof(UserAppointments));
     }
 
     public IActionResult UserAppointments()
@@ -219,19 +222,22 @@ public class AppointmentController : Controller
         return Json(availableDatesAndHours);
     }
 
+
     public IActionResult GetUserAppointments()
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var appointments = _unitOfWork.Appointments.GetAll(u => u.UserId == userId, includeProperties: "Service.Company").OrderByDescending(u => u.Date).ToList();
-        var future = appointments.Where(item => item.Date > DateOnly.FromDateTime(DateTime.UtcNow)).OrderBy(item => item.Date).ToList();
-        var past = appointments.Where(item => item.Date <= DateOnly.FromDateTime(DateTime.UtcNow)).OrderByDescending(item => item.Date).ToList();
-
-        // Łączymy posortowane listy (przyszłość rosnąco, przeszłość malejąco)
-        var sortedList = future.Concat(past).ToList();
-        return Json( new { data = sortedList });
+        if (User.IsInRole(Enum.GetName(Role.Customer))) //TODO: DO POPRAWY ten if
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var appointments = _unitOfWork.Appointments.GetAll(u => u.UserId == userId, includeProperties: "Service.Company").ToList();
+            return Json(new { data = appointments });
+        }
+        else
+        {
+            return Json(new { });
+        }
     }
-    #endregion
 
+    #endregion
 
 }
 
@@ -240,7 +246,6 @@ public class AppointmentController : Controller
 /*
     Każda firma pracuje od poniedziałku do piątku w godzinach 8:00-16:00
     W firmie jest tylko jeden pracownik, który wykonuje usługi (Uproszczenie)
-
     Klient może wybrać dowolny dzień i godzinę w zakresie godzin pracy firmy
     Klient nie może wybrać godziny, która już jest zajęta
     Klient nie może wybrać daty dzisiejszej oraz jutrzejrzej

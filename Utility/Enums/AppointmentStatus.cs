@@ -1,4 +1,4 @@
-﻿namespace ReservationApp.Utility;
+﻿namespace ReservationApp.Utility.Enums;
 
 public enum AppointmentStatus
 {
