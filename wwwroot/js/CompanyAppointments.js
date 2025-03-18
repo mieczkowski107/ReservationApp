@@ -1,8 +1,11 @@
 ﻿var dataTable;
 
-
 $(document).ready(function () {
-    loadDataTable();
+    var companyId = window.location.pathname.split('/').pop();
+    companyId = parseInt(companyId, 10);
+
+    loadDataTable(companyId);
+
     // Date filter buttons
     $('#filterAll').click(function () {
         filterByDate('all');
@@ -17,33 +20,44 @@ $(document).ready(function () {
     });
 });
 
-function loadDataTable() {
+function loadDataTable(companyId) {
     dataTable = $('#tblData').DataTable({
-
         order: [[2, 'desc']],
         "ajax": {
-            url: '/Customer/Appointment/GetUserAppointments',
-            dataSrc: 'data'
+            url: `/Admin/Appointment/GetCompanyAppointments/${companyId}`,
+            dataSrc: 'data'  
         },
         "columns": [
             {
-                "data": "service.company.name",
+                "data": "serviceName",  
                 "width": "20%"
             },
             {
-                "data": "service.name",
+                "data": "date", 
                 "width": "20%"
             },
             {
-                "data": "date",
+                "data": "time",  
                 "width": "15%"
             },
             {
-                "data": "time",
+                "data": "userFirstName",  
                 "width": "15%"
             },
             {
-                "data": "status",
+                "data": "userLastName",
+                "width": "15%"
+            },
+            {
+                "data": "userEmail",
+                "width": "15%"
+            },
+            {
+                "data": "userPhoneNumber",
+                "width": "15%"
+            },
+            {
+                "data": "appointmentStatus",  
                 "render": function (data) {
                     var statusClass = '';
                     var statusText = '';
@@ -67,26 +81,27 @@ function loadDataTable() {
                 "width": "15%"
             },
             {
-                "data": "id",
+                "data": "id",  
                 "render": function (data, type, row) {
                     var actionButtons = `<div class="w-75 btn-group" role="group">`;
 
-                    if (row.status === 0 && row.service.isPrepaymentRequired) {
+                    if (row.appointmentStatus === 0 && row.isPrepaymentRequired) {
                         actionButtons += `<a href="/Customer/Appointment/Payment?id=${data}" 
                                              class="btn btn-sm btn-outline-info mx-2">
                                              Payment<i class="bi bi-credit-card"></i>
-                                          </a>`;
-                    } else if (row.status === 0 && !row.service.isPrepaymentRequired) {
-                        actionButtons += `<a href="/Customer/Appointment/Details?id=${data}" 
-                                            class="btn btn-primary mx-2">
-                                            Click to confirm <i class="bi bi-check-lg"></i>
+                                         </a>`;
+                    } else if (row.appointmentStatus === 0 && !row.isPrepaymentRequired) {
+                        actionButtons += `<a href="/Customer/Appointment/Details?id=${data}"
+                                             class="btn btn-sm btn-primary mx-2">
+                                             Click to confirm <i class="bi bi-check-lg"></i>
                                           </a>`;
                     } else {
-                        actionButtons += `<a href="/Customer/Appointment/Details?id=${data}" 
+                        actionButtons += `<a href="/Admin/Appointment/Details?id=${data}"
                                              class="btn btn-sm btn-outline-primary mx-2 w-auto">
                                              Details <i class="bi bi-search"></i>
-                                          </a>`;
+                                         </a>`;
                     }
+
                     return actionButtons;
                 },
                 "width": "30%"
@@ -94,7 +109,7 @@ function loadDataTable() {
         ],
         initComplete: function () {
             this.api()
-                .columns([0, 1, 2, 3])
+                .columns([0, 1, 2, 3,4,5,6,7])
                 .every(function () {
                     var column = this;
                     var select = $('<select class="w-75"><option value=""></option></select>')
@@ -116,16 +131,15 @@ function loadDataTable() {
         }
     });
 }
-
 function filterByDate(filterType) {
     var today = new Date();
-    var formattedToday = today.toISOString().split('T')[0];
-
+    var formattedToday = today.toISOString().split('T')[0]; 
+   
     if (filterType === 'all') {
-        dataTable.column(3).search('').draw();
+        dataTable.column(1).search('').draw(); 
     } else if (filterType === 'past') {
-        dataTable.column(3).search('^((?!' + formattedToday + ').)*$', true, false).draw();
+        dataTable.column(1).search('^((?!' + formattedToday + ').)*$', true, false).draw(); 
     } else if (filterType === 'future') {
-        dataTable.column(3).search('^' + formattedToday + '.*$', true, false).draw();
+        dataTable.column(1).search('^' + formattedToday + '.*$', true, false).draw(); 
     }
 }

@@ -1,0 +1,63 @@
+﻿@using ReservationApp.Utility
+
+<div class="container">
+    <div class="row pt-4 pb-3">
+        <div class="col-6">
+            <h2 class="text-primary">
+                Appointment's List
+            </h2>
+        </div>
+        <div class="text-end col-6">
+            <button id="filterAll" class="btn btn-sm btn-primary">All</button>
+            <button id="filterPast" class="btn btn-sm btn-primary">Past</button>
+            <button id="filterFuture" class="btn btn-sm btn-primary">Future</button>
+        </div>
+    </div>
+</div>
+
+<table id="tblData" class="table table-striped table-bordered text-center justify-content-center shadow">
+    <thead>
+        <tr>
+            <th class="table-info">Service Name</th>
+            <th class="table-info">Date</th>
+            <th class="table-info">Time</th>
+            <th class="table-info">Client First Name</th>
+            <th class="table-info">Client Last Name</th>
+            <th class="table-info">Client Email</th>
+            <th class="table-info">Client Phone</th>
+            <th class="table-info">Status</th>
+            <th class="table-info">Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+    </tbody>
+   
+</table>
+
+@section Scripts
+{
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var statusButtons = document.querySelectorAll('.status-btn');
+
+            statusButtons.forEach(function (btn) {
+                var status = btn.getAttribute('data-status');
+
+                if (status === 'Pending') {
+                    btn.classList.add('btn-outline-warning');
+                } else if (status === 'Paid') {
+                    btn.classList.add('btn-outline-primary');
+                } else if (status === 'Confirmed') {
+                    btn.classList.add('btn-outline-success');
+                } else if (status === 'Completed') {
+                    btn.classList.add('btn-success');
+                } else if (status === 'Cancelled') {
+                    btn.classList.add('btn-outline-danger');
+                } else if (status === 'NoShow') {
+                    btn.classList.add('btn-outline-info');
+                }
+            });
+        });
+    </script>
+    <script src="~/js/CompanyAppointments.js"></script>
+}
