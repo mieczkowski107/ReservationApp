@@ -1,152 +1,200 @@
-﻿@using ReservationApp.Utility
-
+﻿@using ReservationApp.Utility.Enums
+@model CompanyAppointments
 <h3 class="p-2">
     Appointment details:
 </h3>
-<div class="card border-primary shadow">
-    <div class="card-header pt-3">
-        <div class="container">
-            <div class="row pt-2 pb-0 align-items-center">
-                <div class="col-6">
-                    <h4 class="text-primary m-0 px-3">
-                        Mock Company Name
-                    </h4>
-                </div>
-                <div class="col-6 text-end m-0">
-                    <a href="#" class="btn btn-outline-primary p-2">Back to appointments list <i class="bi bi-arrow-left"></i> </a>
+<div class="container">
+    <div class="row">
+        <div class="col-9">
+            <div class="card border-primary shadow">
+                <div class="card-header pt-3">
+                    <div class="container">
+                        <div class="row pt-2 pb-0 align-items-center">
+                            <div class="col-6">
+                                <h4 class="text-primary m-0 px-3">
+                                    @Model.CompanyName
+                                </h4>
+                            </div>
+                            <div class="col-6 text-end m-0">
+                                <a  asp-area="Admin" asp-controller="Appointment" asp-action="Index" asp-route-Id = "@Model.CompanyId" class="btn btn-outline-primary p-2">Back to appointments list <i class="bi bi-arrow-left"></i> </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="container">
+                        <hr />
+                        <div class="row">
+                            <div class="col-6 ps-4">
+                                <span class="fw-bold">Service:</span>
+                                <p>@Model.ServiceName</p>
+                                <p>
+                                    <strong>Appointment Status</strong> <br />
+                                    <span class="badge rounded-pill bg-info">@Model.AppointmentStatus</span> 
+                                </p>
+                            </div>
+                            <div class="col-3">
+                                <p class="m-0 fw-bold text-dark">Date:</p>
+                                Date: @Model.Date <br />
+                                Time: @Model.Time <br />
+                                Duration: @Model.DurationMinutes
+
+                            </div>
+                            <div class="col-3">
+                                <p class="m-0 pt-3 fw-bold text-dark">Price: </p>
+                                @Model.Price.ToString("C")
+                            </div>
+                        </div>
+
+                        <hr />
+                        <div class="row">
+                            <div class="col-6">
+                                <p class="fw-bold">Customer Information:</p>
+                                <p><strong>Name:</strong> @Model.UserFirstName @Model.UserLastName</p>
+                                <p><strong>Email:</strong> @Model.UserEmail</p>
+                                <p><strong>Phone:</strong> @Model.UserPhoneNumber</p>
+                            </div>
+                            <div class="col-6">
+                                <p class="fw-bold">Payment Status:</p>
+                                <p><strong>Payment Intent ID</strong>: @(Model.PaymentIntentId == null ? "No payment" : Model.PaymentIntentId)</p>
+                                <p> <strong>Amount: </strong>@Model.Price</p>
+                                <p> <strong>Status</strong>: @Model.PaymentStatus</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="container">
-            <hr />
-            <div class="row">
-                <div class="col-6 ps-4">
-                    <span class="fw-bold">Service:</span>
-                    <p>Mock Service Name</p>
-                    <p>
-                        <span class="fw-bold m-0 p-0">Description:</span>
-                        <span>Mock description of the service</span>
-                    </p>
+        <div class="col-3">
+            <div class="card text-center">
+                <div class="card-header card border-primary shadow">
+                    <h3>Actions</h3>
                 </div>
-                <div class="col-3">
-                    <p class="fw-bold pb-0 m-0">Address:</p>
-                    Mock Company Address <br />
-                    Zip-code: 12345 <br />
-                    City: Mock City
-                </div>
-                <div class="col-3">
-                    <p class="m-0 fw-bold text-dark">Date:</p>
-                    Date: 03/25/2025 <br />
-                    Time: 10:00 AM - 11:00 AM
-                    <p class="m-0 pt-3 fw-bold text-dark">Price: </p>
-                    $100.00
-                </div>
-            </div>
+                <div class="card-body card border-primary shadow">
+                    <div class="btn-group-vertical" >
+                        @if (Model.AppointmentStatus == AppointmentStatus.Confirmed)
+                        {
+                            <button type="button" class="btn btn-success btn-block m-1" data-bs-toggle="modal" data-bs-target="#completeModal">
+                                Complete Appointment
+                            </button>
+                            <button type="button" class="btn btn-info btn-block m-1" data-bs-toggle="modal" data-bs-target="#noshowModal">
+                                Mark appointment as No Show
+                            </button>
+                        }
+                        @if (Model.AppointmentStatus == AppointmentStatus.Confirmed || Model.AppointmentStatus == AppointmentStatus.Pending)
+                        {
+                            <button type="button" class="btn btn-danger btn-block m-1" data-bs-toggle="modal" data-bs-target="#cancelModal">
+                                Cancel Appointment
+                            </button>
+                        }
+                        @if(Model.PaymentStatus == PaymentStatus.Succeeded)
+                        {
+                              <button type="button" class="btn btn-outline-primary btn-block m-1" data-bs-toggle="modal" data-bs-target="#refundModal">
+                                  Refund Payment
+                              </button>
+                        }
+                      
+                   </div>
+                    <div class="modal fade" id="confirmModal" tabindex="-1" role="dialog" aria-labelledby="confirmModalLabel" aria-hidden="true">
+                        <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header text-center">
+                                    <h3 class="text-center">
+                                        Confirm appointment
+                                    </h3>
+                                </div>
+                                <div class="modal-body text-center">
+                                    Are you sure you want to confirm this appointment?
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                    <a href="#" class="btn btn-success">Confirm</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-            <hr />
-            <div class="row">
-                <div class="col-6">
-                    <p class="fw-bold">Customer Information:</p>
-                    <p><strong>Name:</strong> John Doe</p>
-                    <p><strong>Email:</strong> johndoe@example.com</p>
-                    <p><strong>Phone:</strong> (123) 456-7890</p>
-                </div>
-                <div class="col-6">
-                    <p class="fw-bold">Payment Status:</p>
-                    <p><strong>Payment Intent ID</strong>: mock_payment_intent_123456</p>
-                    <p> <strong>Amount Paid:</strong> $100.00</p>
-                    <p><strong>Payment Date:</strong> 03/20/2025</p>
-                    <p> <strong>Status</strong>: Paid</p>
-                </div>
+                    <div class="modal fade" id="completeModal" tabindex="-1" role="dialog" aria-labelledby="completeModalLabel" aria-hidden="true">
+                        <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header text-center">
+                                    <h3 class="text-center">
+                                        Complete appointment
+                                    </h3>
+                                </div>
+                                <div class="modal-body text-center">
+                                    Are you sure you want to mark this appointment as complete?
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                    <a asp-area="Admin" asp-controller="Appointment" asp-action="CompleteAppointment" asp-route-Id ="@Model.AppointmentId" class="btn btn-success">Complete</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                      <div class="modal fade" id="noshowModal" tabindex="-1" role="dialog" aria-labelledby="completeModalLabel" aria-hidden="true">
+                        <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header text-center">
+                                    <h3 class="text-center">
+                                        No show appointment
+                                    </h3>
+                                </div>
+                                <div class="modal-body text-center">
+                                    Are you sure you want to mark this appointment as no show?
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                    <a asp-area="Admin" asp-controller="Appointment" asp-action="MarkAsNoShowAppointment" asp-route-Id ="@Model.AppointmentId"  class="btn btn-info">Mark as no show</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                   
+                    <div class="modal fade" id="cancelModal" tabindex="-1" role="dialog" aria-labelledby="cancelModalLabel" aria-hidden="true">
+                        <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header text-center">
+                                    <h3 class="text-center">
+                                        Cancel appointment
+                                    </h3>
+                                </div>
+                                <div class="modal-body text-center">
+                                    Are you sure you want to cancel this appointment?
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                    <a asp-area="Admin" asp-controller="Appointment" asp-action="CancelAppointment" asp-route-Id ="@Model.AppointmentId" class="btn btn-danger">Cancel</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                     <div class="modal fade" id="refundModal" tabindex="-1" role="dialog" aria-labelledby="refundModalLabel" aria-hidden="true">
+                        <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header text-center">
+                                    <h3 class="text-center">
+                                        refund payment for appointment
+                                    </h3>
+                                </div>
+                                <div class="modal-body text-center">
+                                    Are you sure you want to make a refund for the appointment?
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                    <a asp-area="Admin" asp-controller="Appointment" asp-action="Refund" asp-route-Id ="@Model.AppointmentId" class="btn btn-info">refund</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                   
+                    
+                </div
             </div>
         </div>
     </div>
-
-
-
-    <div class="card-footer text-end">
-        <div class="btn status-btn" data-status="Paid" style="pointer-events: none;">
-            Paid
-        </div>
-
-        <!-- Admin specific actions -->
-        @if ("Pending" == "Pending")
-        {
-            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#confirmModal">
-                Confirm Appointment
-            </button>
-        }
-        @if ("Confirmed" == "Confirmed")
-        {
-            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#completeModal">
-                Complete Appointment
-            </button>
-        }
-        @if ("Cancelled" != "Cancelled")
-        {
-            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#cancelModal">
-                Cancel Appointment
-            </button>
-        }
-
-        <div class="modal fade" id="confirmModal" tabindex="-1" role="dialog" aria-labelledby="confirmModalLabel" aria-hidden="true">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <div class="modal-header text-center">
-                        <h3 class="text-center">
-                            Confirm appointment
-                        </h3>
-                    </div>
-                    <div class="modal-body text-center">
-                        Are you sure you want to confirm this appointment?
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <a href="#" class="btn btn-success">Confirm</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Modal for Cancel Appointment -->
-        <div class="modal fade" id="cancelModal" tabindex="-1" role="dialog" aria-labelledby="cancelModalLabel" aria-hidden="true">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <div class="modal-header text-center">
-                        <h3 class="text-center">
-                            Cancel appointment
-                        </h3>
-                    </div>
-                    <div class="modal-body text-center">
-                        Are you sure you want to cancel this appointment?
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <a href="#" class="btn btn-danger">Cancel</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Modal for Complete Appointment -->
-        <div class="modal fade" id="completeModal" tabindex="-1" role="dialog" aria-labelledby="completeModalLabel" aria-hidden="true">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <div class="modal-header text-center">
-                        <h3 class="text-center">
-                            Complete appointment
-                        </h3>
-                    </div>
-                    <div class="modal-body text-center">
-                        Are you sure you want to mark this appointment as complete?
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <a href="#" class="btn btn-success">Complete</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-    </div>
+    
 </div>
+
+
