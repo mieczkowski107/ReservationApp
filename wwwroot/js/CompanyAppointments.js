@@ -133,13 +133,29 @@ function loadDataTable(companyId) {
 }
 function filterByDate(filterType) {
     var today = new Date();
-    var formattedToday = today.toISOString().split('T')[0]; 
-   
+    today.setHours(0, 0, 0, 0);
+
+    function parseDate(dateString) {
+        var parts = dateString.split('-');
+        return new Date(parts[0], parts[1] - 1, parts[2]);
+    }
+
+    $.fn.dataTable.ext.search.pop();
+
     if (filterType === 'all') {
-        dataTable.column(1).search('').draw(); 
-    } else if (filterType === 'past') {
-        dataTable.column(1).search('^((?!' + formattedToday + ').)*$', true, false).draw(); 
-    } else if (filterType === 'future') {
-        dataTable.column(1).search('^' + formattedToday + '.*$', true, false).draw(); 
+        dataTable.draw();
+    } else {
+        $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
+            var rowDate = parseDate(data[1]);
+
+            if (filterType === 'past') {
+                return rowDate < today;
+            } else if (filterType === 'future') {
+                return rowDate >= today;
+            }
+            return true;
+        });
+
+        dataTable.draw();
     }
 }

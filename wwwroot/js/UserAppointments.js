@@ -72,13 +72,13 @@ function loadDataTable() {
                     var actionButtons = `<div class="w-75 btn-group" role="group">`;
 
                     if (row.status === 0 && row.service.isPrepaymentRequired) {
-                        actionButtons += `<a href="/Customer/Appointment/Payment?id=${data}" 
+                        actionButtons += `<a href="/Customer/Payment/AppointmentPayment?appointmentId=${data}" 
                                              class="btn btn-sm btn-outline-info mx-2">
                                              Payment<i class="bi bi-credit-card"></i>
                                           </a>`;
                     } else if (row.status === 0 && !row.service.isPrepaymentRequired) {
                         actionButtons += `<a href="/Customer/Appointment/Details?id=${data}" 
-                                            class="btn btn-primary mx-2">
+                                            class="btn btn-sm btn-primary mx-2">
                                             Click to confirm <i class="bi bi-check-lg"></i>
                                           </a>`;
                     } else {
@@ -119,13 +119,29 @@ function loadDataTable() {
 
 function filterByDate(filterType) {
     var today = new Date();
-    var formattedToday = today.toISOString().split('T')[0];
+    today.setHours(0, 0, 0, 0); 
+
+    function parseDate(dateString) {
+        var parts = dateString.split('-');
+        return new Date(parts[0], parts[1] - 1, parts[2]);
+    }
+
+    $.fn.dataTable.ext.search.pop(); 
 
     if (filterType === 'all') {
-        dataTable.column(3).search('').draw();
-    } else if (filterType === 'past') {
-        dataTable.column(3).search('^((?!' + formattedToday + ').)*$', true, false).draw();
-    } else if (filterType === 'future') {
-        dataTable.column(3).search('^' + formattedToday + '.*$', true, false).draw();
+        dataTable.draw(); 
+    } else {
+        $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
+            var rowDate = parseDate(data[2]);
+
+            if (filterType === 'past') {
+                return rowDate < today;
+            } else if (filterType === 'future') {
+                return rowDate >= today;
+            }
+            return true;
+        });
+
+        dataTable.draw(); 
     }
 }
