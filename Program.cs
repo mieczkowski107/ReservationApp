@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using ReservationApp.Utility;
 using ReservationApp.Services;
+using System.Runtime.CompilerServices;
+using Stripe;
 
 namespace ReservationApp
 {
@@ -63,12 +65,19 @@ namespace ReservationApp
             builder.Services.AddRazorPages();
             #endregion
 
-            #region scoped services
+            #region Scoped Services
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
             builder.Services.AddScoped<IEmailSender, EmailSender>();
             builder.Services.AddScoped<IServiceProvider, ServiceProvider>();
             #endregion
 
+            #region Stripe
+
+            builder.Services.Configure<StripeSettings>(builder.Configuration.GetSection("Stripe"));
+            StripeConfiguration.ApiKey = builder.Configuration.GetSection("Stripe:SecretKey").Get<string>();
+           
+
+            #endregion
 
             var app = builder.Build();
 
