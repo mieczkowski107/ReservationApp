@@ -11,6 +11,7 @@ namespace ReservationApp.Data.Repository
         public IServiceRepository Services { get; private set; }
 
         public IAppointmentRepository Appointments {  get; private set; }
+        public IPaymentRepository Payment { get; set; }
 
         public UnitOfWork(ApplicationDbContext db)
         {
@@ -19,6 +20,7 @@ namespace ReservationApp.Data.Repository
             Companies = new CompanyRepository(_db);
             Services = new ServiceRepository(_db);
             Appointments = new AppointmentRepository(_db);
+            Payment = new PaymentRepository(_db);
         }
         public void Save()
         {

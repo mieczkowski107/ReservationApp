@@ -2,10 +2,13 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NuGet.Protocol;
+using ReservationApp.Data;
 using ReservationApp.Data.Repository.IRepository;
 using ReservationApp.Models;
 using ReservationApp.Models.ViewModels;
 using ReservationApp.Utility.Enums;
+using Stripe;
+using Stripe.Checkout;
 using System.Security.Claims;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -18,7 +21,7 @@ public class AppointmentController : Controller
 {
     private readonly IUnitOfWork _unitOfWork;
     public AppointmentVM AppointmentVM { get; set; }
-    public AppointmentController(IUnitOfWork unitOfWork)
+    public AppointmentController(IUnitOfWork unitOfWork, ApplicationDbContext applicationDbContext)
     {
         _unitOfWork = unitOfWork;
     }
@@ -34,6 +37,11 @@ public class AppointmentController : Controller
             ServiceId = (int)ServiceId,
         };
         return View(AppointmentVM);
+    }
+
+    public IActionResult UserAppointments()
+    {
+        return View();
     }
 
     [HttpPost]
@@ -77,7 +85,6 @@ public class AppointmentController : Controller
             return RedirectToAction(nameof(Index), new { appointmentVM.ServiceId });
         }
 
-
         var appointment = new Appointment
         {
             Date = appointmentVM.SelectedDate,
@@ -85,6 +92,8 @@ public class AppointmentController : Controller
             ServiceId = appointmentVM.ServiceId,
             UserId = User.FindFirstValue(ClaimTypes.NameIdentifier)
         };
+
+
         _unitOfWork.Appointments.Add(appointment);
         _unitOfWork.Save();
         return RedirectToAction(nameof(Confirmation), new { appointment.Id });
@@ -93,56 +102,117 @@ public class AppointmentController : Controller
     public IActionResult Confirmation(int id)
     {
         string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-       
-        var appointment = _unitOfWork.Appointments.Get(u => u.Id == id && u.UserId == userId, includeProperties: "Service.Company", tracked: false);
+        var appointment = _unitOfWork.Appointments.Get(u => u.Id == id && u.UserId == userId, includeProperties: "Service.Company", tracked: true);
+        if (appointment == null)
+        {
+            return NotFound();
+        }
+        if (appointment.Service.IsPrepaymentRequired)
+        {
+            var payment = _unitOfWork.Payment.Get(u => u.AppointmentId == id);
+            if (payment is null)
+            {
+                var newPayment = new Payment
+                {
+                    AppointmentId = appointment.Id,
+                    Amount = appointment.Service.Price,
+                    Status = PaymentStatus.Pending,
+                };
+                _unitOfWork.Payment.Add(newPayment);
+                _unitOfWork.Save();
+            }
+        }
+        return View(appointment);
+    }
+
+
+    public IActionResult Details(int id)
+    {
+        string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var appointment = _unitOfWork.Appointments.Get(u => u.Id == id && u.UserId == userId, includeProperties: "Service.Company", tracked: true);
         if (appointment is null)
         {
             return NotFound();
         }
+        if (appointment.Status == AppointmentStatus.Pending && !appointment.Service.IsPrepaymentRequired)
+        {
+            TempData["success"] = "Your appointment has been confirmed!";
+            appointment.Status = AppointmentStatus.Confirmed;
+        }
+        if (appointment.Status == AppointmentStatus.Pending && appointment.Service.IsPrepaymentRequired)
+        {
+            //TODO: Need to extract logic to a separate method and call it here
+            var payment = _unitOfWork.Payment.Get(u => u.AppointmentId == appointment.Id);
+            var service = new SessionService();
+            Session session = service.Get(payment.SessionId);
+            if (session.PaymentStatus.ToLower() == "paid")
+            {
+                TempData["success"] = "Your appointment has been confirmed!";
+                _unitOfWork.Payment.UpdateStripePaymentID(appointment.Id, session.Id, session.PaymentIntentId);
+                _unitOfWork.Payment.UpdateStatus(appointment.Id, AppointmentStatus.Confirmed, PaymentStatus.Succeeded);
+            }
+        }
+
+        _unitOfWork.Appointments.Update(appointment);
+        _unitOfWork.Save();
+
         return View(appointment);
     }
     public IActionResult Cancel(int id)
     {
         string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var appointment = _unitOfWork.Appointments.Get(u => u.Id == id && u.UserId == userId, includeProperties: "Service", tracked: false);
+        var appointment = _unitOfWork.Appointments.Get(u => u.Id == id && u.UserId == userId, includeProperties: "Service", tracked: true);
         if (appointment is null)
         {
             return NotFound();
         }
-        appointment.Status = AppointmentStatus.Cancelled;
+        if(appointment.Status == AppointmentStatus.Cancelled)
+        {
+            TempData["error"] = "Appointment already cancelled";
+            return RedirectToAction(nameof(UserAppointments));
+        }
+
+        if (!appointment.IsCancelationAvailable())
+        {
+            TempData["error"] = "Appointment already passed or it is too late to cancel appointment";
+            return RedirectToAction(nameof(UserAppointments));
+        }
+
+        if (appointment.Service.IsPrepaymentRequired)
+        {
+            var payment = _unitOfWork.Payment.Get(u => u.AppointmentId == id);
+            if(payment is null)
+            {
+                return NotFound();
+            }
+            //TODO: Need to extract refund logic to a separate method and call it here
+            if (payment.Status == PaymentStatus.Succeeded)
+            {
+                var options = new RefundCreateOptions
+                {
+                    Reason = RefundReasons.RequestedByCustomer,
+                    PaymentIntent = payment.PaymentIntentId,
+                };
+                var service = new RefundService();
+                service.Create(options);
+                _unitOfWork.Payment.UpdateStatus(id, AppointmentStatus.Cancelled, PaymentStatus.Refunded);
+                TempData["success"] = "Your appointment has been cancelled and money will be refunded in next few days.";
+            }
+        }
+        else
+        {
+            appointment.Status = AppointmentStatus.Cancelled;
+            TempData["success"] = "Your appointment has been cancelled.";
+        }
         _unitOfWork.Appointments.Update(appointment);
         _unitOfWork.Save();
-        TempData["success"] = "Your appointment has been cancelled!";
         return RedirectToAction(nameof(UserAppointments));
-    }
 
-    public IActionResult Details(int id)
-    {
-        string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var appointment = _unitOfWork.Appointments.Get(u => u.Id == id && u.UserId == userId, includeProperties: "Service.Company", tracked: false);
-        if (appointment is null)
-        {
-            return NotFound();
-        }
-        if (appointment.Status == AppointmentStatus.Pending)
-        {
-            TempData["success"] = "Your appointment has been confirmed!";
-            appointment.Status = AppointmentStatus.Confirmed;
-        }
-
-        _unitOfWork.Appointments.Update(appointment);
-        _unitOfWork.Save();
-
-        return View(appointment);
-    }
-
-    public IActionResult UserAppointments()
-    {
-        return View();
     }
 
     #region APICALLS
 
+    [HttpGet]
     public IActionResult GetDateAndHours(int? ServiceId)
     {
         if (ServiceId == null)
@@ -222,10 +292,10 @@ public class AppointmentController : Controller
         return Json(availableDatesAndHours);
     }
 
-
+    [HttpGet]
     public IActionResult GetUserAppointments()
     {
-        if (User.IsInRole(Enum.GetName(Role.Customer))) //TODO: DO POPRAWY ten if
+        if (User.IsInRole(Role.Customer.ToString())) //TODO: DO POPRAWY ten if
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var appointments = _unitOfWork.Appointments.GetAll(u => u.UserId == userId, includeProperties: "Service.Company").ToList();

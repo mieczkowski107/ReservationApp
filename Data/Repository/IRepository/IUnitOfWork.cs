@@ -7,6 +7,7 @@ namespace ReservationApp.Data.Repository.IRepository
         public ICompanyRepository Companies { get; }
         public IServiceRepository Services { get; }
         public IAppointmentRepository Appointments { get; }
+        public IPaymentRepository Payment { get; }
 
         void BeginTransaction();
         void CommitTransaction();
