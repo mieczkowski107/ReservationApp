@@ -28,12 +28,12 @@ public class CompanyController : Controller
     public IActionResult Index()
     {
         List<Company> companies = new();
-        if (User.IsInRole(Enum.GetName(Role.Admin)!))
+        if (User.IsInRole(Role.Admin.ToString()))
         {
             companies = _unitOfWork.Companies.GetAll(includeProperties: "Category").ToList();
 
         }
-        else if (User.IsInRole(Enum.GetName(Role.CompanyManager)!))
+        else if (User.IsInRole(Role.CompanyManager.ToString()))
         {
             Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid ownerId);
             companies = _unitOfWork.Companies.GetAll(u => u.OwnerId == ownerId, includeProperties: "Category").ToList();
@@ -116,7 +116,7 @@ public class CompanyController : Controller
                 companyVm.Company.ImageUrl = @"\images\company\Temporary.jpg";
             }
 
-            if (companyVm.Company.OwnerId == null && User.IsInRole(Enum.GetName(Role.CompanyManager)!))
+            if (companyVm.Company.OwnerId == null && User.IsInRole(Role.CompanyManager.ToString()))
             {
                 Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid ownerId);
                 companyVm.Company.OwnerId = ownerId;
@@ -198,12 +198,12 @@ public class CompanyController : Controller
     [HttpGet]
     public IActionResult GetAll()
     {
-        if (User.IsInRole(Enum.GetName(Role.Admin)!))
+        if (User.IsInRole(Role.Admin.ToString()))
         {
             var allObj = _unitOfWork.Companies.GetAll();
             return Json(new { data = allObj });
         }
-        else if (User.IsInRole(Enum.GetName(Role.CompanyManager)!))
+        else if (User.IsInRole(Role.CompanyManager.ToString()))
         {
             Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid ownerId);
             var allObj = _unitOfWork.Companies.GetAll(c => c.OwnerId == ownerId);

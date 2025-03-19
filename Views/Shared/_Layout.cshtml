@@ -42,12 +42,12 @@
                         <li class="nav-item ">
                             <a class="nav-link  text-white" href="#">Contact</a>
                         </li>
-                        @if (User.IsInRole(Enum.GetName(Role.Admin)!) || User.IsInRole(Enum.GetName(Role.CompanyManager)!))
+                        @if (User.IsInRole(Role.Admin.ToString()) || User.IsInRole(Role.CompanyManager.ToString()))
                         {
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle text-white" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Content Mangament</a>
                                 <div class="dropdown-menu">
-                                    @if(User.IsInRole(Enum.GetName(Role.Admin)))
+                                    @if (User.IsInRole(Role.Admin.ToString()))
                                     {
                                         <a class="dropdown-item text-white text-center" asp-area="Admin" asp-controller="Category" asp-action="Index">Category</a>
                                         <a class="dropdown-item text-white text-center" asp-area="Admin" asp-controller="Company" asp-action="Index">Company</a>
@@ -56,7 +56,7 @@
                                         <a class="dropdown-item text-white text-center" asp-area="Identity" asp-page="/Account/Register">Create User</a>
                                         <a class="dropdown-item text-white" href="#">Separated link</a>
                                     }
-                                    @if (User.IsInRole(Enum.GetName(Role.CompanyManager)))
+                                    @if (User.IsInRole(Role.CompanyManager.ToString()))
                                     {
                                         <a class="dropdown-item text-white text-center" asp-area="Admin" asp-controller="Company" asp-action="Index">Company</a>
                                         <a class="dropdown-item text-white text-center" asp-area="Admin" asp-controller="Appointments" asp-action="Index">Appointments</a>  

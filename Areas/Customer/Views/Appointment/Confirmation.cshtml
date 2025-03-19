@@ -46,7 +46,7 @@
         <div class="card-footer text-end">
             @if (Model.Service.IsPrepaymentRequired)
             {
-                <a asp-area="Customer" asp-controller="Appointment" asp-action="Confirmed" asp-route-Id="@Model.Id" class="btn btn-outline-info w-auto text-end">Go to payment</a>
+                <a asp-area="Customer" asp-controller="Payment" asp-action="AppointmentPayment" asp-route-appointmentId="@Model.Id" class="btn btn-outline-info w-auto text-end">Go to payment</a>
             }
             else
             {

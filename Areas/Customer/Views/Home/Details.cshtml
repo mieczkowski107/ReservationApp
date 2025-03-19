@@ -1,7 +1,7 @@
 ﻿@using ReservationApp.Models
 @model List<Service>
 
-<div class="card border-primary">
+<div class="card border-primary ">
     <div class="card-header shadow  bg-primary pt-2">
         <h3 class="text-white text-center ">@Model[0].Company.Name</h3>
 
@@ -33,7 +33,7 @@
                             </h3>
                             <ul class="list-unstyled text-center p-0">
                                 <li class="p-0">
-                                    @Model[0].Company.Phone, 
+                                    @Model[0].Company.Phone,
                                 </li>
                                 <li>
                                     @Model[0].Company.Email
@@ -46,10 +46,10 @@
         </span>
     </p>
     <hr class="m-0 pb-3" />
-    @foreach (var item in Model)
-    {
-        <div class="card-body p-3 border-primary">
-            <div class="card mb-3 border-primary">
+    <div class="card-body p-3 border-primary overflow-y-scroll" style="height: 60vh">
+        @foreach (var item in Model)
+        {
+            <div class="card mb-3 border-primary ">
                 <div class="card-header shadow border-primary">
                     <div class="container">
                         <div class="row">
@@ -68,11 +68,12 @@
                 <div class="card-body">
                     <div class="container">
                         <div class="row">
-                            <p class="m-0 col-6 text-dark opacity-75  mb-0">
-                                <span>
+                            <div class="col-6">
+                                <p class="m-0 text-dark opacity-75  mb-0">
                                     @Html.Raw(item.Description)
-                                </span>
-                            </p>
+                                </p>
+                            </div>
+                            
                             <p class="m-0 col-3 text-dark opacity-75  mb-0 fw-bold">
                                 Duration:
                                 <span class="">
@@ -80,19 +81,26 @@
                                     @item.DurationMinutes.TotalMinutes minutes
                                 </span>
                             </p>
-                            <p class="m-0 col-3 text-dark opacity-75  mb-0 fw-bold">
+                            <p class="m-0 col-3 text-dark opacity-75  mb-0 fw-bold text-center">
                                 Price
-                                <span class="">
+                                <span class="text-center">
                                     @item.Price.ToString("C")
+                                    @if (item.IsPrepaymentRequired)
+                                    {
+                                        <span class="badge bg-warning text-dark text-center">Prepayment required</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success text-center">No prepayment required</span>
+                                    }
                                 </span>
                             </p>
                         </div>
                     </div>
                 </div>
             </div>
-
-        </div>
-    }
+        }
+    </div>
 
 
 

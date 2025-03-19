@@ -124,12 +124,12 @@ public class RegisterModel : PageModel
 
     public async Task OnGetAsync(string returnUrl = null)
     {
-        if (!_roleManager.RoleExistsAsync(Enum.GetName(Role.Customer)).GetAwaiter().GetResult())
+        if (!_roleManager.RoleExistsAsync(Role.Customer.ToString()).GetAwaiter().GetResult())
         {
-            await _roleManager.CreateAsync(new IdentityRole(Enum.GetName(Role.Customer)));
-            await _roleManager.CreateAsync(new IdentityRole(Enum.GetName(Role.Admin)));
-            await _roleManager.CreateAsync(new IdentityRole(Enum.GetName(Role.Employee)));
-            await _roleManager.CreateAsync(new IdentityRole(Enum.GetName(Role.CompanyManager)));
+            await _roleManager.CreateAsync(new IdentityRole(Role.Customer.ToString()));
+            await _roleManager.CreateAsync(new IdentityRole(Role.Admin.ToString()));
+            await _roleManager.CreateAsync(new IdentityRole(Role.Employee.ToString()));
+            await _roleManager.CreateAsync(new IdentityRole(Role.CompanyManager.ToString()));
         }
         Input = new InputModel
         {
@@ -165,13 +165,13 @@ public class RegisterModel : PageModel
             if (result.Succeeded)
             {
                 _logger.LogInformation("User created a new account with password.");
-                if(Input.Role != null && User.IsInRole(Enum.GetName(Role.Admin)))
+                if(Input.Role != null && User.IsInRole((Role.Admin.ToString())))
                 {
                     await _userManager.AddToRoleAsync(user, Input.Role.ToString());
                 }
                 else
                 {
-                    await _userManager.AddToRoleAsync(user, Enum.GetName(Role.Customer));
+                    await _userManager.AddToRoleAsync(user, Role.Customer.ToString());
                 }
 
                 var userId = await _userManager.GetUserIdAsync(user);
@@ -192,7 +192,7 @@ public class RegisterModel : PageModel
                 }
                 else
                 {
-                    if(User.IsInRole(Enum.GetName(Role.Admin)))
+                    if(User.IsInRole((Role.Admin.ToString())))
                     {
                         TempData["success"] = "New User created successfully";
                     }
