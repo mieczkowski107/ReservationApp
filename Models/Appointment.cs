@@ -31,4 +31,12 @@ public class Appointment
     [ValidateNever]
     public Service? Service { get; set; }
 
+    public bool IsCancelationAvailable()
+    {
+        var now = DateTime.UtcNow;
+        var appointmentDateTime = new DateTime(Date.Year, Date.Month, Date.Day, Time.Hour, Time.Minute, Time.Second);
+        var diff = appointmentDateTime - now;
+        return diff.TotalHours > 25 || Status == AppointmentStatus.Cancelled || Status == AppointmentStatus.Completed || Status == AppointmentStatus.NoShow;
+    }
+
 }
