@@ -9,6 +9,7 @@ namespace ReservationApp.Data.Repository.IRepository
         public IAppointmentRepository Appointments { get; }
         public IPaymentRepository Payment { get; }
         public INotificationRepository Notification { get; }
+        public IReviewRepository Review { get; }
 
         void BeginTransaction();
         void CommitTransaction();

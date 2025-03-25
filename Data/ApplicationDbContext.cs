@@ -17,6 +17,7 @@ public class ApplicationDbContext : IdentityDbContext<IdentityUser>
     public DbSet<Appointment> Appointments { get; set; }
     public DbSet<Payment> Payment { get; set; }
     public DbSet<Notification> Notification { get; set; }
+    public DbSet<Review> Review { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
