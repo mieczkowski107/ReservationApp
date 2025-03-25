@@ -8,6 +8,10 @@ using ReservationApp.Utility;
 using ReservationApp.Services;
 using System.Runtime.CompilerServices;
 using Stripe;
+using Hangfire;
+using Hangfire.Dashboard;
+using ReservationApp.Utility.Enums;
+using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace ReservationApp
 {
@@ -15,7 +19,7 @@ namespace ReservationApp
     {
         public static void Main(string[] args)
         {
-            
+
             var builder = WebApplication.CreateBuilder(args);
 
             #region builder Services
@@ -25,7 +29,18 @@ namespace ReservationApp
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
             builder.Services.AddHostedService<AppointmentStatusService>();
+            builder.Services.AddHostedService<AppointmentConfirmationService>();
             builder.Services.AddMemoryCache();
+
+            #region Hangfire configuration
+            builder.Services.AddHangfire(config =>
+            {
+                config.UseSqlServerStorage(builder.Configuration.GetConnectionString("DefaultConnection"));
+            });
+            builder.Services.AddHangfireServer();
+
+            #endregion
+
 
             #region Identity
             builder.Services
@@ -66,6 +81,7 @@ namespace ReservationApp
             #endregion
 
             #region Scoped Services
+            builder.Services.AddScoped<NotificationService>();
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
             builder.Services.AddScoped<IEmailSender, EmailSender>();
             builder.Services.AddScoped<IServiceProvider, ServiceProvider>();
@@ -75,7 +91,7 @@ namespace ReservationApp
 
             builder.Services.Configure<StripeSettings>(builder.Configuration.GetSection("Stripe"));
             StripeConfiguration.ApiKey = builder.Configuration.GetSection("Stripe:SecretKey").Get<string>();
-           
+
 
             #endregion
 
@@ -93,11 +109,17 @@ namespace ReservationApp
                 app.UseHsts();
             }
 
+
+
             app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseRouting();
             app.UseAuthentication();
             app.UseAuthorization();
+
+
+           
+            app.UseHangfireDashboard();
 
             app.MapRazorPages();
             app.MapStaticAssets();

@@ -1,4 +1,5 @@
 ﻿using Azure.Identity;
+using Hangfire;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NuGet.Protocol;
@@ -6,6 +7,7 @@ using ReservationApp.Data;
 using ReservationApp.Data.Repository.IRepository;
 using ReservationApp.Models;
 using ReservationApp.Models.ViewModels;
+using ReservationApp.Services;
 using ReservationApp.Utility.Enums;
 using Stripe;
 using Stripe.Checkout;
@@ -20,10 +22,12 @@ namespace ReservationApp.Areas.Customer.Controllers;
 public class AppointmentController : Controller
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly NotificationService _notificationService;
     public AppointmentVM AppointmentVM { get; set; }
-    public AppointmentController(IUnitOfWork unitOfWork, ApplicationDbContext applicationDbContext)
+    public AppointmentController(IUnitOfWork unitOfWork, NotificationService notificationService)
     {
         _unitOfWork = unitOfWork;
+        _notificationService = notificationService;
     }
 
     public IActionResult Index(int? ServiceId)
@@ -92,16 +96,21 @@ public class AppointmentController : Controller
             ServiceId = appointmentVM.ServiceId,
             UserId = User.FindFirstValue(ClaimTypes.NameIdentifier)
         };
-
-
         _unitOfWork.Appointments.Add(appointment);
         _unitOfWork.Save();
+        
+        _notificationService.CreateNotification(NotificationType.Confirmation, appointment.Id);
+        BackgroundJob.Enqueue(() => _notificationService.SendNotification(appointment.Id));
+
+        var jobId = BackgroundJob.Schedule(() => _notificationService.CreateNotification(NotificationType.Reminder,appointment.Id), new DateTime(appointment.Date, appointment.Time).AddHours(-24));
+        BackgroundJob.ContinueJobWith(jobId, () => _notificationService.SendNotification(appointment.Id));
+
         return RedirectToAction(nameof(Confirmation), new { appointment.Id });
     }
 
     public IActionResult Confirmation(int id)
     {
-        string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        string userId = User.FindFirstValue(claimType: ClaimTypes.NameIdentifier)!;
         var appointment = _unitOfWork.Appointments.Get(u => u.Id == id && u.UserId == userId, includeProperties: "Service.Company", tracked: true);
         if (appointment == null)
         {
@@ -166,11 +175,7 @@ public class AppointmentController : Controller
         {
             return NotFound();
         }
-        if(appointment.Status == AppointmentStatus.Cancelled)
-        {
-            TempData["error"] = "Appointment already cancelled";
-            return RedirectToAction(nameof(UserAppointments));
-        }
+
 
         if (!appointment.IsCancelationAvailable())
         {
@@ -204,6 +209,8 @@ public class AppointmentController : Controller
             appointment.Status = AppointmentStatus.Cancelled;
             TempData["success"] = "Your appointment has been cancelled.";
         }
+        _notificationService.CreateNotification(NotificationType.Cancellation, appointment.Id);
+        BackgroundJob.Enqueue(() => _notificationService.SendNotification(appointment.Id));
         _unitOfWork.Appointments.Update(appointment);
         _unitOfWork.Save();
         return RedirectToAction(nameof(UserAppointments));
@@ -316,6 +323,9 @@ public class AppointmentController : Controller
 /*
     Każda firma pracuje od poniedziałku do piątku w godzinach 8:00-16:00
     W firmie jest tylko jeden pracownik, który wykonuje usługi (Uproszczenie)
+
+
+    Wizyty:
     Klient może wybrać dowolny dzień i godzinę w zakresie godzin pracy firmy
     Klient nie może wybrać godziny, która już jest zajęta
     Klient nie może wybrać daty dzisiejszej oraz jutrzejrzej

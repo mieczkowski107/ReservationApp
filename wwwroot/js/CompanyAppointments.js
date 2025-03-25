@@ -81,7 +81,7 @@ function loadDataTable(companyId) {
                 "width": "15%"
             },
             {
-                "data": "id",  
+                "data": "appointmentId",  
                 "render": function (data, type, row) {
                     var actionButtons = `<div class="w-75 btn-group" role="group">`;
 
@@ -91,10 +91,10 @@ function loadDataTable(companyId) {
                                              Payment<i class="bi bi-credit-card"></i>
                                          </a>`;
                     } else if (row.appointmentStatus === 0 && !row.isPrepaymentRequired) {
-                        actionButtons += `<a href="/Customer/Appointment/Details?id=${data}"
-                                             class="btn btn-sm btn-primary mx-2">
-                                             Click to confirm <i class="bi bi-check-lg"></i>
-                                          </a>`;
+                        actionButtons += `<a href="/Admin/Appointment/Details?id=${data}"
+                                             class="btn btn-sm btn-outline-primary mx-2 w-auto">
+                                             Details <i class="bi bi-search"></i>
+                                         </a>`;
                     } else {
                         actionButtons += `<a href="/Admin/Appointment/Details?id=${data}"
                                              class="btn btn-sm btn-outline-primary mx-2 w-auto">
