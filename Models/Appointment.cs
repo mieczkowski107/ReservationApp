@@ -34,7 +34,7 @@ public class Appointment
     public bool IsCancelationAvailable()
     {
         var now = DateTime.UtcNow;
-        var appointmentDateTime = new DateTime(Date.Year, Date.Month, Date.Day, Time.Hour, Time.Minute, Time.Second);
+        var appointmentDateTime = new DateTime(Date,Time);
         var diff = appointmentDateTime - now;
         return diff.TotalHours > 25 || Status == AppointmentStatus.Cancelled || Status == AppointmentStatus.Completed || Status == AppointmentStatus.NoShow;
     }
