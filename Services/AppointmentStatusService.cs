@@ -4,15 +4,10 @@ using ReservationApp.Utility.Enums;
 
 namespace ReservationApp.Services;
 
-public class AppointmentStatusService : BackgroundService
+public class AppointmentStatusService(IServiceProvider serviceProvider) : BackgroundService
 {
-    private readonly IServiceProvider _serviceProvider;
-    //private readonly IUnitOfWork _unitOfWork;
-    public AppointmentStatusService(IServiceProvider serviceProvider)
-    {
-        _serviceProvider = serviceProvider;
-    }
-    
+    private readonly IServiceProvider _serviceProvider = serviceProvider;
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         while (!stoppingToken.IsCancellationRequested)
@@ -32,21 +27,11 @@ public class AppointmentStatusService : BackgroundService
                 else if (appointment.Status == AppointmentStatus.Confirmed)
                 {
                     appointment.Status = AppointmentStatus.Completed;
+
                 }
                 _unitOfWork.Appointments.Update(appointment);
             }
-            //_unitOfWork.Save();
-            DateTime dateNow = DateTime.UtcNow;
-            foreach (var appointment in _unitOfWork.Appointments.GetAll(u => u.CreatedAt.Date == dateNow.Date))
-            {
-                if (appointment.Status == AppointmentStatus.Pending && ((dateNow - appointment.CreatedAt).TotalMinutes > TimeSpan.FromMinutes(15).TotalMinutes))
-                {
-                    appointment.Status = AppointmentStatus.Cancelled;
-                    _unitOfWork.Appointments.Remove(appointment);
-                }
-            }
-            _unitOfWork.Save();
-            await Task.Delay((int)TimeSpan.FromMinutes(15).TotalMilliseconds, stoppingToken);
+            await Task.Delay((int)TimeSpan.FromMinutes(60).TotalMilliseconds, stoppingToken);
         }
     }
 }
