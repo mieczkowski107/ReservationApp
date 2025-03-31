@@ -10,9 +10,6 @@
 - Powiadomienia e-mail o zbliżających rezerwacjach i zmianach
 - Generowanie raportów z danego okresu 
 - Możliwość oceny i recenzji usługodawcy 
-## Authors
-
-- [@mieczkowski107](https://www.github.com/mieczkowski107)
 
 ## Tech Stack
 - C#
@@ -23,3 +20,7 @@
 - Hangfire
 - Cshtml && Boostrap v5.3
 - Stripe
+
+## Authors
+
+- [@mieczkowski107](https://www.github.com/mieczkowski107)
