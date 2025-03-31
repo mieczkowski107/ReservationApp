@@ -15,6 +15,7 @@ public class Payment
     public PaymentStatus Status { get; set; } = PaymentStatus.Pending;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? CompletedDate { get; set; }
+    [Column(TypeName = "decimal(18,2)")]
     public decimal Amount { get; set; }
 
     [ForeignKey("AppointmentId")]

@@ -18,6 +18,7 @@ namespace ReservationApp.Models
         [Required]
         public string? Description { get; set; }
         [Required]
+        [Column(TypeName = "decimal(18,2)")]
         public decimal Price { get; set; }
         [Required]
         public TimeSpan DurationMinutes { get; set; }
