@@ -32,7 +32,7 @@ public class AppointmentController : Controller
 
     public IActionResult Index(int? ServiceId)
     {
-        if (ServiceId == null)
+        if (!ServiceId.HasValue)
         {
             return NotFound();
         }
@@ -161,7 +161,7 @@ public class AppointmentController : Controller
                 _unitOfWork.Payment.UpdateStatus(appointment.Id, AppointmentStatus.Confirmed, PaymentStatus.Succeeded);
             }
         }
-
+        ViewBag.IsReviewed = _unitOfWork.Review.Get(u => u.AppointmentId == id) != null ? true : false;
         _unitOfWork.Appointments.Update(appointment);
         _unitOfWork.Save();
 

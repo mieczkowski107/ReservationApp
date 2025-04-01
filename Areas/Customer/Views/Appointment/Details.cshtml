@@ -54,12 +54,20 @@
         <div class="btn status-btn" data-status="@Model.Status" style="pointer-events: none;">
             @Model.Status
         </div>
-        @if(Model.Status == AppointmentStatus.Pending || Model.Status == AppointmentStatus.Paid || Model.Status == AppointmentStatus.Confirmed)
+        @if (Model.Status == AppointmentStatus.Completed && ViewBag.IsReviewed == false)
+        {
+            <a asp-controller="Review" asp-action="Create" asp-route-appointmentId="@Model.Id"
+            class="btn btn-sm btn-outline-primary mx-2 w-auto">
+                Write opinion <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
+            </a>
+        }
+        @if (Model.Status == AppointmentStatus.Pending || Model.Status == AppointmentStatus.Paid || Model.Status == AppointmentStatus.Confirmed)
         {
             <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#exampleModal">
                 Cancel
             </button>
         }
+        <!--Modal-->
         <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
@@ -91,7 +99,7 @@
 {
     <script>
         document.addEventListener("DOMContentLoaded", function () {
-            
+
             var statusButtons = document.querySelectorAll('.status-btn');
 
             statusButtons.forEach(function (btn) {

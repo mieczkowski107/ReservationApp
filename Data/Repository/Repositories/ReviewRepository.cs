@@ -10,5 +10,6 @@ namespace ReservationApp.Data.Repository.Repositories
         {
             _db = db;
         }
+
     }
 }

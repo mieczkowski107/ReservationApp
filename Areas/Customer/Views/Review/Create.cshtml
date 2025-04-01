@@ -1,0 +1,57 @@
+﻿@using ReservationApp.Models
+@model Review
+
+<div class="card shadow border-0 my-4">
+    <div class="card-header bg-secondary bg-gradient ml-0 py-3">
+        <div class="row">
+            <div class="col-12 text-center">
+                <h2 class="py-2"> Write review</h2>
+            </div>
+        </div>
+    </div>
+    <div class="card-body p-4">
+        <form
+            asp-area="Customer"
+            asp-controller="Review"
+            asp-action="Create"
+            method="post" class="row" enctype="multipart/form-data">
+            <input asp-for="AppointmentId" hidden />
+            <div class="row">
+                <div class="col-12">
+                    <div class="border p-3">
+                        @*<div asp-validation-summary="ModelOnly"></div>*@
+                        <div class="form-floating py-2 col-12">
+                            <label asp-for="Content" class="ms-2 form-label"></label>
+                            <textarea asp-for="Content" class="form-control border-0 shadow" rows="10" style="resize:none;">
+                           </textarea>
+                            <span asp-validation-for="Content" class="text-danger"></span>
+                        </div>
+                        <div class="form-floating py-2 col-12">
+                            <input asp-for="Rating" class="form-control border-0 shadow" min="1" max="5" value="5"/>
+                            <label asp-for="Rating" class="ms-2 form-label"></label>
+                            <span asp-validation-for="Rating" class="text-danger"></span>
+                        </div>
+                        <div class="row pt-2">
+                            <div class="col-6 col-md-3">
+         
+                                    <button type="submit" class="btn btn-primary form-control">Create</button>
+
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <a asp-controller="Category" asp-action="Index" class="btn btn-outline-primary border  form-control">
+                                    Back to List
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </form>
+    </div>
+</div>
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

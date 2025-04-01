@@ -21,7 +21,7 @@ public class HomeController : Controller
     {
         _logger = logger;
         _unitOfWork = unitOfWork;
-        
+
     }
 
     public IActionResult Index()
@@ -36,15 +36,23 @@ public class HomeController : Controller
         return View(companiesCategories);
     }
 
-  
+
     public IActionResult Details(int companyId)
     {
         var services = _unitOfWork.Services.GetAll(s => s.CompanyId == companyId, includeProperties: nameof(Company)).ToList();
-        if(services == null || services.Count() == 0)
+        var reviews = _unitOfWork.Review.GetAll(filter: r => r.Appointment.Service.CompanyId == companyId,
+                                                  includeProperties: "Appointment.Service.Company");
+        var ratingAVG = reviews.Count() > 0 ?  reviews.Average(r => r.Rating) : 0;
+        var quantity = reviews.Count();
+
+        if (services == null || services.Count() == 0)
         {
             TempData["error"] = "Something went wrong.";
             return RedirectToAction(nameof(Index));
         }
+        ViewBag.Rating = ratingAVG.ToString("F2");
+        ViewBag.Quantity = quantity;
+
         return View(services);
     }
 
