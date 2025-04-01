@@ -49,13 +49,13 @@ function loadDataTable() {
                     var statusText = '';
 
                     switch (data) {
-                        case 0: statusClass = 'btn-outline-warning'; statusText = 'Pending'; break;
-                        case 1: statusClass = 'btn-outline-primary'; statusText = 'Paid'; break;
-                        case 2: statusClass = 'btn-outline-success'; statusText = 'Confirmed'; break;
-                        case 3: statusClass = 'btn-success'; statusText = 'Completed'; break;
-                        case 4: statusClass = 'btn-outline-info'; statusText = 'No Show'; break;
-                        case 5: statusClass = 'btn-outline-danger'; statusText = 'Cancelled'; break;
-                        default: statusClass = 'btn-outline-secondary'; statusText = 'Unknown';
+                        case 0: statusClass = 'btn-outline-warning btn-sm'; statusText = 'Pending'; break;
+                        case 1: statusClass = 'btn-outline-primary btn-sm'; statusText = 'Paid'; break;
+                        case 2: statusClass = 'btn-outline-success btn-sm'; statusText = 'Confirmed'; break;
+                        case 3: statusClass = 'btn-success btn-sm'; statusText = 'Completed'; break;
+                        case 4: statusClass = 'btn-outline-info btn-sm'; statusText = 'No Show'; break;
+                        case 5: statusClass = 'btn-outline-danger btn-sm'; statusText = 'Cancelled'; break;
+                        default: statusClass = 'btn-outline-secondary btn-sm'; statusText = 'Unknown';
                     }
 
                     return `<div class="w-75 btn-group" role="group">
@@ -83,7 +83,7 @@ function loadDataTable() {
                                           </a>`;
                     } else {
                         actionButtons += `<a href="/Customer/Appointment/Details?id=${data}" 
-                                             class="btn btn-sm btn-outline-primary mx-2 w-auto">
+                                             class="btn btn-sm btn-outline-primary mx-2 ">
                                              Details <i class="bi bi-search"></i>
                                           </a>`;
                     }
