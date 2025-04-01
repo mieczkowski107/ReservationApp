@@ -33,10 +33,15 @@ public class ReviewController : Controller
     [Authorize]
     public IActionResult Create(int appointmentId)
     {
-        var review = _unitOfWork.Review.Get(filter: r => r.AppointmentId == appointmentId, includeProperties: nameof(Appointment));
-        if (review != null || review.Appointment.Status != AppointmentStatus.Confirmed)
+        var review = _unitOfWork.Review.Get(filter: r => r.AppointmentId == appointmentId, includeProperties: "Appointment");
+        if (review != null)
         {
             TempData["Error"] = "You cannot reviewed this appointment";
+            return RedirectToAction("UserAppointments", "Appointment");
+        }
+        if (review.Appointment.Status != AppointmentStatus.Confirmed)
+        {
+            TempData["Error"] = "You can review appointment if it is marked as completed";
             return RedirectToAction("UserAppointments", "Appointment");
         }
         var newReview = new Review
@@ -51,10 +56,21 @@ public class ReviewController : Controller
     [ActionName("Create")]
     public IActionResult CreatePost(Review review)
     {
+
         if (!ModelState.IsValid)
         {
             return View(review);
         }
+        #region Check if user can review 
+        // Review is only allowed for completed appointments and user can only review their own appointments
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var appointment = _unitOfWork.Appointments.Get(filter: a => a.Id == review.AppointmentId && a.UserId == userId);
+        if(appointment == null || appointment.Status != AppointmentStatus.Completed)
+        {
+            return NotFound();
+        }
+        #endregion
+
         _unitOfWork.Review.Add(review);
         _unitOfWork.Save();
         TempData["Success"] = "You review has been added successfully!";
