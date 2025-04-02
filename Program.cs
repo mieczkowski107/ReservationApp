@@ -12,6 +12,9 @@ using Hangfire;
 using Hangfire.Dashboard;
 using ReservationApp.Utility.Enums;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Serilog;
+using Microsoft.Extensions.Options;
+using Serilog.Sinks.MSSqlServer;
 
 namespace ReservationApp
 {
@@ -40,7 +43,6 @@ namespace ReservationApp
             builder.Services.AddHangfireServer();
 
             #endregion
-
 
             #region Identity
             builder.Services
@@ -88,15 +90,30 @@ namespace ReservationApp
             #endregion
 
             #region Stripe
-
             builder.Services.Configure<StripeSettings>(builder.Configuration.GetSection("Stripe"));
             StripeConfiguration.ApiKey = builder.Configuration.GetSection("Stripe:SecretKey").Get<string>();
-
-
             #endregion
+
+            #region Serilog
+            Log.Logger = new LoggerConfiguration()
+                .MinimumLevel.Information().Enrich
+                .FromLogContext().WriteTo
+                .MSSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
+                new MSSqlServerSinkOptions()
+                {
+                    TableName = "Logs",
+                    AutoCreateSqlTable = true,
+                })
+                .CreateLogger();
+            builder.Logging.ClearProviders();
+            builder.Logging.AddSerilog();
+            builder.Host.UseSerilog();
+            #endregion
+
 
             var app = builder.Build();
 
+            app.UseSerilogRequestLogging();
             #endregion
 
 
@@ -118,7 +135,7 @@ namespace ReservationApp
             app.UseAuthorization();
 
 
-           
+
             app.UseHangfireDashboard();
 
             app.MapRazorPages();
