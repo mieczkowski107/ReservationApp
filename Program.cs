@@ -15,6 +15,10 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Serilog;
 using Microsoft.Extensions.Options;
 using Serilog.Sinks.MSSqlServer;
+using Serilog.Ui.Web.Extensions;
+using Serilog.Ui.MsSqlServerProvider.Extensions;
+using Serilog.Ui.Core.Extensions;
+using Serilog.Ui.Web.Models;
 
 namespace ReservationApp
 {
@@ -96,7 +100,7 @@ namespace ReservationApp
 
             #region Serilog
             Log.Logger = new LoggerConfiguration()
-                .MinimumLevel.Information().Enrich
+                .MinimumLevel.Warning().Enrich
                 .FromLogContext().WriteTo
                 .MSSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
                 new MSSqlServerSinkOptions()
@@ -108,12 +112,17 @@ namespace ReservationApp
             builder.Logging.ClearProviders();
             builder.Logging.AddSerilog();
             builder.Host.UseSerilog();
+
+            builder.Services.AddSerilogUi(options => options
+                                .UseSqlServer(opts => opts
+                                    .WithConnectionString(builder.Configuration.GetConnectionString("DefaultConnection"))
+                                                                                .WithTable("Logs")));
             #endregion
 
 
             var app = builder.Build();
 
-            app.UseSerilogRequestLogging();
+            
             #endregion
 
 
@@ -126,16 +135,15 @@ namespace ReservationApp
                 app.UseHsts();
             }
 
-
-
             app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseRouting();
             app.UseAuthentication();
             app.UseAuthorization();
 
-
-
+            app.UseSerilogRequestLogging();
+            app.UseSerilogUi(options=> options.HideSerilogUiBrand()
+                                              .WithAuthenticationType(AuthenticationType.Jwt));
             app.UseHangfireDashboard();
 
             app.MapRazorPages();
