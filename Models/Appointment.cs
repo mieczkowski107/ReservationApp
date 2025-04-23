@@ -31,6 +31,8 @@ public class Appointment
     [ValidateNever]
     public Service? Service { get; set; }
 
+    [ValidateNever]
+    public virtual Review? Review { get; set; }
     public bool IsCancelationAvailable()
     {
         var now = DateTime.UtcNow;
@@ -38,5 +40,6 @@ public class Appointment
         var diff = appointmentDateTime - now;
         return diff.TotalHours > 25 || Status == AppointmentStatus.Cancelled || Status == AppointmentStatus.Completed || Status == AppointmentStatus.NoShow;
     }
+    
 
 }

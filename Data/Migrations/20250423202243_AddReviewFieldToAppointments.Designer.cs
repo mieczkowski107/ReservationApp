@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ReservationApp.Data;
 
@@ -11,9 +12,11 @@ using ReservationApp.Data;
 namespace ReservationApp.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250423202243_AddReviewFieldToAppointments")]
+    partial class AddReviewFieldToAppointments
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -515,6 +518,10 @@ namespace ReservationApp.Migrations
 
                     b.Property<int?>("NoShowAppointments")
                         .HasColumnType("int");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(1500)
+                        .HasColumnType("nvarchar(1500)");
 
                     b.Property<DateOnly>("StartRangeDate")
                         .HasColumnType("date");
