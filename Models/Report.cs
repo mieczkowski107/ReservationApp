@@ -27,8 +27,6 @@ public class Report
 
     [Column(TypeName ="decimal(18,2)")]
     public decimal? AvgRating { get; set; }
-    [MaxLength(1500)]
-    public string? Note { get; set; }
 
     [ForeignKey("CompanyId")]
     public virtual Company? Company { get; set; }
