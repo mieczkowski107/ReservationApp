@@ -1,28 +1,62 @@
 # ReservationApp
-# Aplikacja webowa umożliwiająca rezerwację usług
-### Główne funkcjonalności:
-- Rejestracja i logowanie użytkownika (DONE)
-- Zarządzanie kategoriami (DONE)
-- Zarządzanie usługodawcami i usługami, z możliwoscią przypisania kategorii usługodawcy (DONE)
-- Przeglądanie i rezerwacja usług, z wyborem dnia oraz godziny  (DONE)
-- Przeglądanie historii rezerwacji  (DONE)
-- Integracja z systemem płatności online  (DONE)
-- Powiadomienia e-mail o zbliżających rezerwacjach i zmianach (DONE, choć do zmiany)
-- Możliwość oceny i recenzji usługodawcy (DONE)
-- Generowanie raportów z danego okresu   
-- Rejestrowanie logów aplikacji (DONE)
+
+ReservationApp to aplikacja webowa umożliwiająca rezerwację usług online. Projekt stworzony z myślą o łatwej obsłudze zarówno dla klientów, jak i usługodawców.
+
+## Główne funkcjonalności
+
+- **Rejestracja i logowanie użytkownika**  
+  Rejestracja konta oraz logowanie przy użyciu ASP.NET Identity Core z bezpiecznym przechowywaniem haseł.
+
+- **Zarządzanie kategoriami usług**  
+  Możliwość tworzenia, edytowania i usuwania kategorii, do których przypisywani są usługodawcy.
+
+- **Zarządzanie usługodawcami i usługami**  
+  Dodawanie usługodawców wraz z przypisaniem ich do kategorii. Usługodawcy mogą definiować dostępne usługi, ich ceny oraz opisy.
+
+- **Przeglądanie i rezerwacja usług**  
+  Użytkownicy mogą przeglądać listę dostępnych usług, wybierać dogodny dzień i godzinę. System automatycznie waliduje dostępność terminów, aby zapobiec podwójnym rezerwacjom.
+
+- **Płatności online**  
+  Integracja z systemem płatności Stripe.
+
+- **Historia rezerwacji**  
+  Każdy użytkownik może przeglądać swoją historię rezerwacji: zarówno nadchodzące, jak i już zrealizowane wizyty.
+
+- **Powiadomienia e-mail**  
+  Automatyczne wysyłanie powiadomień e-mail o zbliżających się rezerwacjach oraz o zmianach statusu rezerwacji, realizowane przy użyciu Hangfire oraz SMTP.
+
+- **Recenzje i oceny usługodawców**  
+  Po skorzystaniu z usługi, użytkownik może wystawić ocenę (w formie gwiazdek) oraz dodać opinię tekstową dla usługodawcy.
+
+- **Generowanie raportów**  
+  Administratorzy mogą generować raporty rezerwacji z wybranego okresu czasu. Raporty mogą być eksportowane do plików CSV przy użyciu CsvHelper.
+
+- **Rejestrowanie logów aplikacji**  
+  Pełne logowanie działania aplikacji, obsługi błędów i ważnych operacji biznesowych przy pomocy Serilog.
+
+---
 
 ## Tech Stack
-- C#
-- ASP.NET Core 6
-- CShtml with Boostrap v5.3
-- EntityFramework Core with MS SQL
-- ASP.NET Identity Core
-- Serilog
-- Hangfire
-- Stripe
-- 
 
-## Authors
+- **Backend**: C#, ASP.NET Core 6, Entity Framework Core
+- **Frontend**: Razor Pages (cshtml) + Bootstrap v5.3
+- **Baza danych**: MS SQL Server
+- **Autoryzacja**: ASP.NET Identity Core
+- **Płatności**: Stripe API
+- **Logowanie**: Serilog
+- **Zadania w tle**: Hangfire
+- **Eksport danych**: CsvHelper
 
-- [@mieczkowski107](https://www.github.com/mieczkowski107)
+---
+
+## Instalacja lokalna
+ Sklonuj repozytorium:
+   ```bash
+   git clone https://github.com/mieczkowski107/reservationapp.git
+   cd reservationapp
+   dotnet ef database update
+   dotnet run
+   ```
+   > Upewnij się, że masz zainstalowane .NET 6 SDK oraz poprawnie skonfigurowane połączenie do bazy danych w pliku appsettings.json.
+   Aplikacja będzie dostępna pod adresem: https://localhost:5001/
+
