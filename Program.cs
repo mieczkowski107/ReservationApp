@@ -19,8 +19,6 @@ using Serilog.Ui.Web.Extensions;
 using Serilog.Ui.MsSqlServerProvider.Extensions;
 using Serilog.Ui.Core.Extensions;
 using Serilog.Ui.Web.Models;
-using Hangfire.Dashboard.BasicAuthorization;
-using ReservationApp.Services.Interfaces;
 
 namespace ReservationApp
 {
@@ -54,7 +52,7 @@ namespace ReservationApp
             builder.Services
                 .AddIdentity<IdentityUser, IdentityRole>()
                 .AddEntityFrameworkStores<ApplicationDbContext>();
-               // .AddDefaultTokenProviders(); //for 2FA and email confirmation
+            //    .AddDefaultTokenProviders(); for 2FA and email confirmation
 
 
             builder.Services.Configure<IdentityOptions>(options =>
@@ -93,7 +91,6 @@ namespace ReservationApp
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
             builder.Services.AddScoped<IEmailSender, EmailSender>();
             builder.Services.AddScoped<IServiceProvider, ServiceProvider>();
-            builder.Services.AddScoped<IReportService, ReportService>();
             #endregion
 
             #region Stripe
@@ -144,10 +141,10 @@ namespace ReservationApp
             app.UseAuthentication();
             app.UseAuthorization();
 
-            //app.UseSerilogRequestLogging();
+            app.UseSerilogRequestLogging();
             app.UseSerilogUi(options=> options.HideSerilogUiBrand()
                                               .WithAuthenticationType(AuthenticationType.Jwt));
-            app.UseHangfireDashboard("/hangfire");
+            app.UseHangfireDashboard();
 
             app.MapRazorPages();
             app.MapStaticAssets();

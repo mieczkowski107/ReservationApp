@@ -34,17 +34,12 @@ public class ReviewController : Controller
     public IActionResult Create(int appointmentId)
     {
         var review = _unitOfWork.Review.Get(filter: r => r.AppointmentId == appointmentId, includeProperties: "Appointment");
-        var appointment = _unitOfWork.Appointments.Get(filter: a => a.Id == appointmentId);
         if (review != null)
         {
             TempData["Error"] = "You cannot reviewed this appointment";
             return RedirectToAction("UserAppointments", "Appointment");
         }
-        if(appointment == null)
-        {
-            return NotFound();
-        }
-        if (appointment.Status != AppointmentStatus.Completed)
+        if (review.Appointment.Status != AppointmentStatus.Confirmed)
         {
             TempData["Error"] = "You can review appointment if it is marked as completed";
             return RedirectToAction("UserAppointments", "Appointment");

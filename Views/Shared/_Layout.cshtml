@@ -55,14 +55,15 @@
 
                                         <div class="dropdown-divider"></div>
                                         <a class="dropdown-item text-white text-center" asp-area="Identity" asp-page="/Account/Register">Create User</a>
-                                        <a class="dropdown-item text-white" asp-area="Admin" asp-controller="Report" asp-action="Index">Reports</a>
+                                        <a class="dropdown-item text-white" href="#">Separated link</a>
                                     }
                                     @if (User.IsInRole(Role.CompanyManager.ToString()))
                                     {
                                         <a class="dropdown-item text-white text-center" asp-area="Admin" asp-controller="Company" asp-action="Index">Company</a>
                                         <a class="dropdown-item text-white text-center" asp-area="Admin" asp-controller="Appointments" asp-action="Index">Appointments</a>  
                                         <div class="dropdown-divider"></div>
-                                        <a class="dropdown-item text-white text-center" asp-area="Admin" asp-controller="Report" asp-action="Index">Reports</a>
+                                       
+                                        <a class="dropdown-item text-white text-center" href="#">Separated link</a>
                                     }
                                    
                                 </div>
