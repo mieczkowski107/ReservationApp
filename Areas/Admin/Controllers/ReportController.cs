@@ -7,6 +7,7 @@ using ReservationApp.Models.ViewModels;
 using ReservationApp.Services;
 using ReservationApp.Services.Interfaces;
 using System.Security.Claims;
+using System.Security.Principal;
 
 namespace ReservationApp.Areas.Admin.Controllers;
 
@@ -16,18 +17,14 @@ public class ReportController(IUnitOfWork unitOfWork, IReportService reportServi
 {
     private readonly IUnitOfWork _unitOfWork = unitOfWork;
     private readonly IReportService reportService = reportService;
-    private const string _reportExtenxion = ".csv";
+    private const string _reportExtension = ".csv";
     public IActionResult Index()
     {
-        var userId = new Guid();
-        if (!RoleService.IsAdmin(User))
-        {
-            Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out userId);
-        }
-
+        Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid userId);
         var reportFormVM = new ReportFormVM
         {
-            CompanyList = _unitOfWork.Companies.GetAll(u => u.OwnerId == userId).Select(i => new SelectListItem
+            CompanyList = _unitOfWork.Companies.GetAll( u => RoleService.IsAdmin(User)
+                                                             || u.OwnerId == userId).Select(i => new SelectListItem
             {
                 Text = i.Name,
                 Value = i.Id.ToString()
@@ -40,7 +37,10 @@ public class ReportController(IUnitOfWork unitOfWork, IReportService reportServi
     [HttpPost]
     public IActionResult Result(ReportFormVM reportFormVM)
     {
-        var report = _unitOfWork.Report.Get(p => p.CompanyId == reportFormVM.CompanyId && p.StartRangeDate == reportFormVM.StartRangeDate && p.EndRangeDate == reportFormVM.EndRangeDate);
+        Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid userId);
+        var report = _unitOfWork.Report.Get(p => (RoleService.IsAdmin(User) || p.Company.OwnerId == userId)
+                                                 && p.CompanyId == reportFormVM.CompanyId
+                                                 && p.StartRangeDate == reportFormVM.StartRangeDate && p.EndRangeDate == reportFormVM.EndRangeDate);
         if (report == null)
         {
             report = reportService.GetReport(reportFormVM.CompanyId, reportFormVM.StartRangeDate, reportFormVM.EndRangeDate);
@@ -53,13 +53,16 @@ public class ReportController(IUnitOfWork unitOfWork, IReportService reportServi
     [HttpGet]
     public IActionResult DownloadReport(int reportId)
     {
-        var report = _unitOfWork.Report.Get(p=>p.Id == reportId, includeProperties: nameof(Company), tracked: true);
+        Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid userId);
+        var report = _unitOfWork.Report.Get(p => p.Id == reportId && (RoleService.IsAdmin(User) || p.Company.OwnerId == userId),
+                                            includeProperties: nameof(Company),
+                                            tracked: true);
         if(report == null)
         {
             return NotFound();
         }
 
-        string fileName = $"{report.StartRangeDate}_{report.EndRangeDate}" + Path.GetExtension(_reportExtenxion);
+        string fileName = $"{report.StartRangeDate}_{report.EndRangeDate}" + Path.GetExtension(_reportExtension);
         
         if (!System.IO.File.Exists(report.ReportUrl))
         {
