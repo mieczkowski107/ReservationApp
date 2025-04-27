@@ -46,6 +46,7 @@
 
   <ItemGroup>
     <Folder Include="wwwroot\reports\" />
+    <Folder Include="wwwroot\reports\company-1\" />
   </ItemGroup>
 
 </Project>
