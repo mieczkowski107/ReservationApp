@@ -1,6 +1,8 @@
-﻿using ReservationApp.Data.Repository;
+﻿using CsvHelper;
+using ReservationApp.Data.Repository;
 using ReservationApp.Data.Repository.IRepository;
 using ReservationApp.Models;
+using ReservationApp.Services.Interfaces;
 using ReservationApp.Utility.Enums;
 
 namespace ReservationApp.Services;
@@ -8,10 +10,12 @@ namespace ReservationApp.Services;
 public class ReportService : IReportService
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IWebHostEnvironment _webEnviroment;
 
-    public ReportService(IUnitOfWork unitOfWork)
+    public ReportService(IUnitOfWork unitOfWork, IWebHostEnvironment enviroment)
     {
         _unitOfWork = unitOfWork;
+        _webEnviroment = enviroment;
     }
 
     public Report GetReport(int companyId, DateOnly startDate, DateOnly endDate)
@@ -40,13 +44,30 @@ public class ReportService : IReportService
             TotalClients = filteredAppointments.Count() - filteredAppointments.Count(p => p.Status == AppointmentStatus.Cancelled),
             UniqueClients = uniqueClients.Count(),
             NewClients = newClients,
-            AvgRating = (decimal)filteredAppointments.Average(p =>
-            {
-                return p.Review?.Rating;
-            })
+            AvgRating = filteredAppointments.Any() ? (decimal?)filteredAppointments.Average(p => p.Review?.Rating) : null
         };
 
         return report;
+    }
+
+    public string GetReportPath(int companyId)
+    {
+        string wwwRoot = _webEnviroment.WebRootPath;
+        string productPath = @"reports\company-" + companyId;
+        string finalPath = Path.Combine(wwwRoot, productPath);
+        if(!Directory.Exists(finalPath))
+        {
+            Directory.CreateDirectory(finalPath);
+        }
+        return finalPath;
+    }
+
+    public void WriteReportToCSV(object obj, string Path)
+    {
+        IEnumerable<object> objects = [obj];
+        using var writer = new StreamWriter(Path);
+        using var csv = new CsvWriter(writer, culture: System.Globalization.CultureInfo.InvariantCulture);
+        csv.WriteRecords(objects);
     }
 
 
