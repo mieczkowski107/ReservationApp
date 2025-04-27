@@ -1,0 +1,90 @@
+﻿@model ReportVm
+
+<script>
+    window.onload = function () {
+        const today = new Date().toISOString().split("T")[0];
+        document.getElementById("startDate").max = today;
+        document.getElementById("endDate").max = today;
+    };
+</script>
+<div class="card">
+    <div class="card-header">
+        <h3>Report: @Model.StartRangeDate - @Model.EndRangeDate</h3>
+    </div>
+    <div class="card-body">
+        <table class="table-responsive table-striped table-bordered text-center justify-content-center shadow">
+            <thead class="">
+                <tr>
+                    <th class="table-info">
+                        Start Date
+                    </th>
+                    <th class="table-info">
+                        End Date
+                    </th>
+                    <th class="table-info">
+                        Income
+                    </th>
+                    <th class="table-info">
+                        Total appointments
+                    </th>
+                    <th class="table-info px-0">
+                        Deleted appointments
+                    </th>
+                    <th class="table-info px-0">
+                        NoShow appointemns
+                    </th>
+                    <th class="table-info px-0">
+                        Total Clients
+                    </th>
+                    <th class="table-info px-0">
+                        Unique Clients
+                    </th>
+                    <th class="table-info px-0">
+                        New Clients
+                    </th>
+                    <th class="table-info px-0">
+                        Avg rating
+                    </th>
+                </tr>
+            </thead>
+            <tbody class="">
+                <tr>
+                    <td>
+                        @Model.StartRangeDate
+                    </td>
+                    <td>
+                        @Model.EndRangeDate
+                    </td>
+                    <td>
+                        @Model.Income
+                    </td>
+                    <td>
+                        @Model.Appointments
+                    </td>
+                    <td>
+                        @Model.DeletedAppointments
+                    </td>
+                    <td>
+                        @Model.NoShowAppointments
+                    </td>
+                    <td>
+                        @Model.TotalClients
+                    </td>
+                    <td>
+                        @Model.UniqueClients
+                    </td>
+                    <td>
+                        @Model.NewClients
+                    </td>
+                    <td>
+                        @Model.AvgRating
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="text-end">
+            <a asp-area="Admin" asp-controller="Report" asp-action="DownloadReport" asp-route-reportId ="@Model.Id" download="Report-@Model.StartRangeDate-@Model.EndRangeDate" class="btn btn-outline-success mt-2">Download</a>
+        </div>
+    </div>
+</div>

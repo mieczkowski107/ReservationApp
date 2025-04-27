@@ -1,6 +1,7 @@
 {
   "dependencies": {
-    "bootstrap-icons": "^1.11.3"
+    "bootstrap-icons": "^1.11.3",
+    "paginationjs": "^2.6.0"
   },
   "devDependencies": {
     "eslint": "^9.21.0"
