@@ -6,19 +6,13 @@ using ReservationApp.Services;
 using ReservationApp.Utility.Enums;
 using Stripe;
 using System.Security.Claims;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace ReservationApp.Areas.Admin.Controllers;
 
 [Area("Admin")]
 [Authorize(Roles = "CompanyManager,Admin")]
-public class AppointmentController : Controller
+public class AppointmentController(IUnitOfWork unitOfWork) : Controller
 {
-    private readonly IUnitOfWork _unitOfWork;
-    public AppointmentController(IUnitOfWork unitOfWork)
-    {
-        _unitOfWork = unitOfWork;
-    }
     public IActionResult Index()
     {
         return View();
@@ -26,7 +20,7 @@ public class AppointmentController : Controller
 
     public IActionResult Details(int? Id)
     {
-        var appointment = _unitOfWork.Appointments.Get(u => u.Id == Id, includeProperties: "Service.Company,User");
+        var appointment = unitOfWork.Appointments.Get(u => u.Id == Id, includeProperties: "Service.Company,User");
         if (appointment == null)
         {
             return NotFound();
@@ -42,31 +36,28 @@ public class AppointmentController : Controller
         var companyAppointment = new CompanyAppointments()
         {
             AppointmentId = appointment.Id,
-            CompanyId = appointment.Service.CompanyId,
-            CompanyName = appointment.Service.Company.Name,
+            CompanyId = appointment.Service!.CompanyId,
+            CompanyName = appointment.Service?.Company?.Name,
             Date = appointment.Date,
             Time = appointment.Time,
             AppointmentStatus = appointment.Status,
-            DurationMinutes = appointment.Service.DurationMinutes,
+            DurationMinutes = appointment.Service!.DurationMinutes,
             Price = appointment.Service.Price,
             ServiceName = appointment.Service.Name,
-            UserFirstName = appointment.User.FirstName,
+            UserFirstName = appointment.User!.FirstName,
             UserLastName = appointment.User.LastName,
             UserEmail = appointment.User.Email,
             UserPhoneNumber = appointment.User.PhoneNumber,
             IsPrepaymentRequired = appointment.Service.IsPrepaymentRequired,
         };
 
-        if (appointment.Service.IsPrepaymentRequired)
+        if (!appointment.Service.IsPrepaymentRequired) return View(companyAppointment);
         {
-            var payment = _unitOfWork.Payment.Get(u => u.AppointmentId == Id);
-            if (payment != null)
-            {
-                companyAppointment.PaymentStatus = payment.Status;
-                companyAppointment.PaymentIntentId = payment.PaymentIntentId;
-            }
+            var payment = unitOfWork.Payment.Get(u => u.AppointmentId == Id);
+            if (payment == null) return View(companyAppointment);
+            companyAppointment.PaymentStatus = payment.Status;
+            companyAppointment.PaymentIntentId = payment.PaymentIntentId;
         }
-
         return View(companyAppointment);
     }
 
@@ -75,7 +66,7 @@ public class AppointmentController : Controller
     // If someone's forgot to mark the appointment as completed, it will be marked as completed by background job
     public IActionResult CompleteAppointment(int id)
     {
-        var appointment = _unitOfWork.Appointments.Get(u => u.Id == id, includeProperties: "Service.Company,User", tracked: true);
+        var appointment = unitOfWork.Appointments.Get(u => u.Id == id, includeProperties: "Service.Company,User", tracked: true);
         if (appointment == null)
         {
             return NotFound();
@@ -94,7 +85,7 @@ public class AppointmentController : Controller
         {
             appointment.Status = AppointmentStatus.Completed;
             TempData["success"] = "Appointment mark as completed succesfully!";
-            _unitOfWork.Save();
+            unitOfWork.Save();
         }
         else
         {
@@ -108,7 +99,7 @@ public class AppointmentController : Controller
     // It must be marked as no show by the company manager
     public IActionResult MarkAsNoShowAppointment(int id)
     {
-        var appointment = _unitOfWork.Appointments.Get(u => u.Id == id, includeProperties: "Service.Company,User", tracked: true);
+        var appointment = unitOfWork.Appointments.Get(u => u.Id == id, includeProperties: "Service.Company,User", tracked: true);
         if (appointment == null)
         {
             return NotFound();
@@ -127,7 +118,7 @@ public class AppointmentController : Controller
         {
             appointment.Status = AppointmentStatus.NoShow;
             TempData["success"] = "Appointment mark as no show succesfully!";
-            _unitOfWork.Save();
+            unitOfWork.Save();
         }
         else
         {
@@ -139,7 +130,7 @@ public class AppointmentController : Controller
     // Cancel the appointment
     public IActionResult CancelAppointment(int id)
     {
-        var appointment = _unitOfWork.Appointments.Get(u => u.Id == id, includeProperties: "Service.Company,User", tracked: true);
+        var appointment = unitOfWork.Appointments.Get(u => u.Id == id, includeProperties: "Service.Company,User", tracked: true);
         if (appointment == null)
         {
             return NotFound();
@@ -161,7 +152,7 @@ public class AppointmentController : Controller
 
         if (appointment.Service.IsPrepaymentRequired)
         {
-            var payment = _unitOfWork.Payment.Get(u => u.AppointmentId == id);
+            var payment = unitOfWork.Payment.Get(u => u.AppointmentId == id);
             if (payment is null)
             {
                 return NotFound();
@@ -176,7 +167,7 @@ public class AppointmentController : Controller
                 };
                 var service = new RefundService();
                 service.Create(options);
-                _unitOfWork.Payment.UpdateStatus(id, AppointmentStatus.Cancelled, PaymentStatus.Refunded);
+                unitOfWork.Payment.UpdateStatus(id, AppointmentStatus.Cancelled, PaymentStatus.Refunded);
                 TempData["success"] = "Your appointment has been cancelled and money will be refunded in next few days.";
             }
         }
@@ -188,7 +179,7 @@ public class AppointmentController : Controller
 
         // TODO: Send email to user about the cancellation
 
-        _unitOfWork.Save();
+        unitOfWork.Save();
         return RedirectToAction(nameof(Details), new { id });
     }
 
@@ -196,7 +187,7 @@ public class AppointmentController : Controller
     public IActionResult GetCompanyAppointments(int Id)
     {
         List<CompanyAppointments> companyAppointments = [];
-        var appointments = _unitOfWork.Appointments.GetAll(
+        var appointments = unitOfWork.Appointments.GetAll(
             u => u.Service.CompanyId == Id,
             includeProperties: "Service.Company,User").ToList();
         if (User.IsInRole(Role.CompanyManager.ToString()) )

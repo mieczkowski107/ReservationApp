@@ -42,7 +42,5 @@ public class ReportVm
 
     [Column(TypeName = "decimal(18,2)")]
     public decimal? AvgRating { get; set; }
-    public string? ReportUrl { get; set; }
-
     
 }
