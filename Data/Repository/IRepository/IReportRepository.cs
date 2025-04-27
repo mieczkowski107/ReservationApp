@@ -3,6 +3,6 @@ using ReservationApp.Models;
 
 namespace ReservationApp.Data.Repository.IRepository;
 
-public interface IReportRepository : IRepository<Review>
+public interface IReportRepository : IRepository<Report>
 {
 }

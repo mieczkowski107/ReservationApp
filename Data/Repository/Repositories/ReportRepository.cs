@@ -3,7 +3,7 @@ using ReservationApp.Models;
 
 namespace ReservationApp.Data.Repository.Repositories;
 
-public class ReportRepository : Repository<Review>, IReportRepository
+public class ReportRepository : Repository<Report>, IReportRepository
 {
     private readonly ApplicationDbContext _db;
 
