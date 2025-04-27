@@ -1,6 +1,4 @@
-﻿@using ReservationApp.Models
-@model CompanyServiceVM
-
+﻿@model CompanyServiceVM
 
 <div class="container">
     <div class="row pt-4 pb-3">
@@ -10,7 +8,7 @@
             </h2>
         </div>
         <div class="col-6 text-end">
-            <a asp-controller="Service" asp-action="Create" asp-route-CompanyId="@Model.Company.Id" class="btn btn-primary"><i class="bi bi-plus-circle"></i> Create new service </a>
+            <a asp-controller="Service" asp-action="Create" asp-route-companyId="@Model.Company.Id" class="btn btn-primary"><i class="bi bi-plus-circle"></i> Create new service </a>
         </div>
     </div>
 </div>
@@ -37,39 +35,31 @@
             </tr>
         </thead>
         <tbody class="">
-            @if (Model == null)
+        @foreach (var item in Model.Services)
             {
-                
-            }
-            else
-            {
-                @foreach (var item in Model.Services)
-                {
-                    <tr>
-                        <td>
-                            @item.Name
-                        </td>
-                        <td>
-                            @item.Price
-                        </td>
-                        <td>
-                            @item.DurationMinutes.TotalMinutes minutes
-                        </td>
-                        <td>
-                            @item.IsPrepaymentRequired
-                        </td>
-                        <td class="w-auto">
-                            <div class="row justify-content-center">
-                                <a asp-controller="Service" asp-action="Edit" asp-route-ServiceId="@item.Id"  class="btn btn-primary mx-1 w-auto"> <i class="bi bi-pencil-square"></i></a>
-                                <a asp-controller="Service" asp-action="Delete" asp-route-Id="@item.Id" class="btn btn-danger mx-1 w-auto"> <i class="bi bi-trash-fill"></i></a>
-                            </div>
+                <tr>
+                    <td>
+                        @item.Name
+                    </td>
+                    <td>
+                        @item.Price
+                    </td>
+                    <td>
+                        @item.DurationMinutes.TotalMinutes minutes
+                    </td>
+                    <td>
+                        @item.IsPrepaymentRequired
+                    </td>
+                    <td class="w-auto">
+                        <div class="row justify-content-center">
+                            <a asp-controller="Service" asp-action="Edit" asp-route-serviceId="@item.Id"  class="btn btn-primary mx-1 w-auto"> <i class="bi bi-pencil-square"></i></a>
+                            <a asp-controller="Service" asp-action="Delete" asp-route-Id="@item.Id" class="btn btn-danger mx-1 w-auto"> <i class="bi bi-trash-fill"></i></a>
+                        </div>
 
-                        </td>
-                    </tr>
-                }
-
+                    </td>
+                </tr>
             }
-        </tbody>
+            </tbody>
     </table>
     <div class="text-end">
         <a asp-area="Admin" asp-controller="Company" asp-action="Index" class="btn btn-primary border  ">

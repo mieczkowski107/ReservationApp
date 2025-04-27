@@ -54,7 +54,7 @@
                             </div>
                             <div class="col-6">
                                 <p class="fw-bold">Payment Status:</p>
-                                <p><strong>Payment Intent ID</strong>: @(Model.PaymentIntentId == null ? "No payment" : Model.PaymentIntentId)</p>
+                                <p><strong>Payment Intent ID</strong>: @(Model.PaymentIntentId ?? "No payment")</p>
                                 <p> <strong>Amount: </strong>@Model.Price</p>
                                 <p> <strong>Status</strong>: @Model.PaymentStatus</p>
                             </div>

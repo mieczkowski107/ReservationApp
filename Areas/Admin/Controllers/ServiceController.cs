@@ -1,28 +1,17 @@
-﻿using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Formatters;
-using ReservationApp.Data;
 using ReservationApp.Data.Repository.IRepository;
 using ReservationApp.Models;
 using ReservationApp.Models.ViewModels;
 using ReservationApp.Services;
-using ReservationApp.Utility;
 using System.Security.Claims;
 
 namespace ReservationApp.Areas.Admin.Controllers;
 
 [Area("Admin")]
 [Authorize(Roles = "Admin,CompanyManager")]
-public class ServiceController : Controller
+public class ServiceController(IUnitOfWork _unitOfWork) : Controller
 {
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly ApplicationDbContext dbContext;
-    public ServiceController(IUnitOfWork unitOfWork, ApplicationDbContext dbContext)
-    {
-        _unitOfWork = unitOfWork;
-        this.dbContext = dbContext;
-    }
     public IActionResult Index(int? id)
     {
         if (!id.HasValue)
@@ -31,33 +20,30 @@ public class ServiceController : Controller
         }
         Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid userId);
         List<Service> services;
-        services = _unitOfWork.Services.GetAll(u => u.CompanyId == (int)id, includeProperties: nameof(Company)).ToList();
-        if (!RoleService.IsAdmin(User))
-        {
-            services = services.Where(s => s.Company.OwnerId == userId).ToList();
-        }
+        services = _unitOfWork.Services.GetAll(u => u.CompanyId == (int)id && (u.Company!.OwnerId == userId || RoleService.IsAdmin(User)), includeProperties: nameof(Company)).ToList();
 
-        var company = services.Any() ? services.First().Company : null;
+        var company = _unitOfWork.Companies.Get(u => u.Id == id && (u.OwnerId == userId || RoleService.IsAdmin(User)));
+
         if (company == null)
         {
             return Forbid();
         }
 
-        CompanyServiceVM companyServiceVM = new()
+        CompanyServiceVM companyServiceVm = new()
         {
             Company = company,
             Services = services
         };
-        return View(companyServiceVM);
+        return View(companyServiceVm);
     }
 
-    public IActionResult Create(int? CompanyId)
+    public IActionResult Create(int? companyId)
     {
-        if (!CompanyId.HasValue)
+        if (!companyId.HasValue)
         {
             return NotFound();
         }
-        var userCompany = _unitOfWork.Companies.Get(u => u.Id == CompanyId);
+        var userCompany = _unitOfWork.Companies.Get(u => u.Id == companyId);
         if (userCompany == null)
         {
             return NotFound();
@@ -65,7 +51,7 @@ public class ServiceController : Controller
         if (!RoleService.IsAdmin(User))
         {
             Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid userId);
-            if (userCompany == null || userCompany.OwnerId != userId)
+            if (userCompany.OwnerId != userId)
             {
                 return Forbid();
             }
@@ -73,21 +59,21 @@ public class ServiceController : Controller
 
         var newService = new Service()
         {
-            CompanyId = (int)CompanyId,
+            CompanyId = (int)companyId,
             Company = userCompany
         };
         return View("Upsert", newService);
 
     }
 
-    public IActionResult Edit(int? ServiceId)
+    public IActionResult Edit(int? serviceId)
     {
-        if (!ServiceId.HasValue)
+        if (!serviceId.HasValue)
         {
             return NotFound();
 
         }
-        var serviceObj = _unitOfWork.Services.Get(u => u.Id == ServiceId, includeProperties: nameof(Company), tracked: false);
+        var serviceObj = _unitOfWork.Services.Get(u => u.Id == serviceId, includeProperties: nameof(Company), tracked: false);
         if(serviceObj == null)
         {
             return NotFound();
@@ -96,7 +82,7 @@ public class ServiceController : Controller
         if (!RoleService.IsAdmin(User))
         {
             Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid userId);
-            if (serviceObj == null || serviceObj.Company.OwnerId != userId)
+            if (serviceObj.Company?.OwnerId != userId)
             {
                 return Forbid();
             }
@@ -119,13 +105,13 @@ public class ServiceController : Controller
             {
                 if(services.Any())
                 {
-                    if (services.First().Company.OwnerId != userId)
+                    if (services.First().Company?.OwnerId != userId)
                     {
                         return Forbid();
                     }
                 }
             }
-            if (service.Id == 0)
+            if (service!.Id == 0)
             {
                 _unitOfWork.Services.Add(service);
                 TempData["success"] = "Service added succesffuly!";
@@ -157,14 +143,10 @@ public class ServiceController : Controller
         if (!RoleService.IsAdmin(User))
         {
             Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid userId);
-            if (serviceObj == null || serviceObj.Company.OwnerId != userId)
+            if (serviceObj.Company?.OwnerId != userId)
             {
                 return Forbid();
             }
-        }
-        if (serviceObj == null)
-        {
-            return NotFound();
         }
         return View(serviceObj);
     }
@@ -186,16 +168,12 @@ public class ServiceController : Controller
         if (!RoleService.IsAdmin(User))
         {
             Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid userId);
-            if (serviceObj == null || serviceObj.Company.OwnerId != userId)
+            if (serviceObj.Company?.OwnerId != userId)
             {
                 return Forbid();
             }
         }
-        if (serviceObj == null)
-        {
-            TempData["error"] = "Error while deleting company";
-            return NotFound();
-        }
+
         _unitOfWork.Services.Remove(serviceObj);
         _unitOfWork.Save();
         TempData["success"] = "Service deleted succesffuly!";

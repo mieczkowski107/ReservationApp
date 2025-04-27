@@ -4,9 +4,7 @@ using ReservationApp.Data.Repository.IRepository;
 using ReservationApp.Models;
 using ReservationApp.Models.ViewModels;
 using ReservationApp.Utility.Enums;
-using System.Runtime.CompilerServices;
 using System.Security.Claims;
-
 namespace ReservationApp.Areas.Customer.Controllers;
 
 [Area("Customer")]

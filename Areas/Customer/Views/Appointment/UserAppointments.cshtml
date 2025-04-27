@@ -1,5 +1,4 @@
-﻿@using ReservationApp.Utility
-@model List<Appointment>
+﻿@model List<Appointment>
 
 <div class="container">
     <div class="row pt-4 pb-3">
@@ -50,11 +49,11 @@
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             // Select all buttons with the 'status-btn' class
-            var statusButtons = document.querySelectorAll('.status-btn');
+            let statusButtons = document.querySelectorAll('.status-btn');
 
             // Loop through each button and update its class based on the data-status
             statusButtons.forEach(function (btn) {
-                var status = btn.getAttribute('data-status');
+                let status = btn.getAttribute('data-status');
 
                 // Update the button class based on the status
                 if (status === 'Pending') {

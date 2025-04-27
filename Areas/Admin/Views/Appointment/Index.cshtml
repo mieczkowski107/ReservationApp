@@ -1,6 +1,4 @@
-﻿@using ReservationApp.Utility
-
-<div class="container">
+﻿<div class="container">
     <div class="row pt-4 pb-3">
         <div class="col-6">
             <h2 class="text-primary">
@@ -38,10 +36,10 @@
 {
     <script>
         document.addEventListener("DOMContentLoaded", function () {
-            var statusButtons = document.querySelectorAll('.status-btn');
+            let statusButtons = document.querySelectorAll('.status-btn');
 
             statusButtons.forEach(function (btn) {
-                var status = btn.getAttribute('data-status');
+                let status = btn.getAttribute('data-status');
 
                 if (status === 'Pending') {
                     btn.classList.add('btn-outline-warning');

@@ -1,5 +1,4 @@
-﻿@using ReservationApp.Models
-@model List<Company>
+﻿@model List<Company>
 
 <div class="container">
     <div class="row pt-4 pb-3">
@@ -53,7 +52,7 @@
                         Email: @item.Email<br />
                     </td>
                     <td>
-                        @item.Category.Name
+                        @item.Category!.Name
                     </td>
                     <td class="pt-4 px-0">
                         <div class="container px-0">
@@ -63,7 +62,6 @@
                                     <a asp-area="Admin" asp-controller="Appointment" asp-action="Index" asp-route-Id="@item.Id" class="dropdown-item p-2"> Appointments <i class="bi bi-card-list m-0"></i></a>
                                     <a asp-controller="Service" asp-action="Index" asp-route-Id="@item.Id" class="dropdown-item p-2 "> Services <i class="bi bi-boxes"></i></a>
                                     <hr class="dropdown-divider" />
-
                                     <a asp-controller="Company" asp-action="Upsert" asp-route-Id="@item.Id" class="dropdown-item btn-primary p-2 ">Edit <i class="bi bi-pencil-square"></i></a>
                                     <a asp-controller="Company" asp-action="Delete" asp-route-Id="@item.Id" class="dropdown-item btn-danger p-2">Delete <i class="bi bi-trash-fill"></i></a>
                                 </div>

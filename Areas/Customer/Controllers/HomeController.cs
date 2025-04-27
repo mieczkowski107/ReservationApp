@@ -1,10 +1,5 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.AspNetCore.OutputCaching;
-using Microsoft.CodeAnalysis;
-using Mono.TextTemplating;
-using ReservationApp.Data;
 using ReservationApp.Data.Repository.IRepository;
 using ReservationApp.Models;
 using ReservationApp.Models.ViewModels;
@@ -12,22 +7,13 @@ using ReservationApp.Models.ViewModels;
 namespace ReservationApp.Areas.Customer.Controllers;
 
 [Area("Customer")]
-public class HomeController : Controller
+public class HomeController(ILogger<HomeController> logger, IUnitOfWork unitOfWork) : Controller
 {
-    private readonly ILogger<HomeController> _logger;
-    private readonly IUnitOfWork _unitOfWork;
-
-    public HomeController(ILogger<HomeController> logger, IUnitOfWork unitOfWork)
-    {
-        _logger = logger;
-        _unitOfWork = unitOfWork;
-
-    }
-
+    private readonly ILogger<HomeController> _logger = logger;
     public IActionResult Index()
     {
-        var companies = _unitOfWork.Companies.GetAll(includeProperties: nameof(Category)).ToList();
-        var categories = _unitOfWork.Categories.GetAll().ToList();
+        var companies = unitOfWork.Companies.GetAll(includeProperties: nameof(Category)).ToList();
+        var categories = unitOfWork.Categories.GetAll().ToList();
         var companiesCategories = new CompaniesCategoriesVM
         {
             Companies = companies,
@@ -39,18 +25,18 @@ public class HomeController : Controller
 
     public IActionResult Details(int companyId)
     {
-        var services = _unitOfWork.Services.GetAll(s => s.CompanyId == companyId, includeProperties: nameof(Company)).ToList();
-        var reviews = _unitOfWork.Review.GetAll(filter: r => r.Appointment.Service.CompanyId == companyId,
+        var services = unitOfWork.Services.GetAll(s => s.CompanyId == companyId, includeProperties: nameof(Company)).ToList();
+        var reviews = unitOfWork.Review.GetAll(filter: r => r.Appointment.Service.CompanyId == companyId,
                                                   includeProperties: "Appointment.Service.Company");
-        var ratingAVG = reviews.Count() > 0 ?  reviews.Average(r => r.Rating) : 0;
+        var ratingAvg = reviews.Any() ?  reviews.Average(r => r.Rating) : 0;
         var quantity = reviews.Count();
 
-        if (services == null || services.Count() == 0)
+        if (!services.Any())
         {
             TempData["error"] = "Something went wrong.";
             return RedirectToAction(nameof(Index));
         }
-        ViewBag.Rating = ratingAVG.ToString("F2");
+        ViewBag.Rating = ratingAvg.ToString("F2");
         ViewBag.Quantity = quantity;
 
         return View(services);

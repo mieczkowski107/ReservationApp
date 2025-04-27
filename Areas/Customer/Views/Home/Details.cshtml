@@ -1,5 +1,4 @@
-﻿@using ReservationApp.Models
-@model List<Service>
+﻿@model List<Service>
 
 <div class="card border-primary ">
     <div class="card-header shadow  bg-primary pt-2">
@@ -175,8 +174,8 @@
                 },
                 pageSize: 5,
                 callback: function(data, pagination) {
-                            var html = data.map(function(item) {
-                            var cardHtml = `
+                            let html = data.map(function(item) {
+                            let cardHtml = `
                                 <div class="card mb-2 border border-primary shadow">
                                     <div class="card-header border ">
                                     <div class="container">
