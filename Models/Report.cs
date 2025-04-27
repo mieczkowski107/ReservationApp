@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -17,7 +18,7 @@ public class Report
     public DateOnly EndRangeDate { get; set; }
     [Required]
     [Column(TypeName ="decimal(18,2)")]
-    public decimal Income { get; set; }
+    public decimal? Income { get; set; }
     public int? Appointments { get; set; }
     public int? DeletedAppointments { get; set; }
     public int? NoShowAppointments { get; set; }
@@ -27,7 +28,10 @@ public class Report
 
     [Column(TypeName ="decimal(18,2)")]
     public decimal? AvgRating { get; set; }
+    public string? ReportUrl { get; set; }
 
     [ForeignKey("CompanyId")]
     public virtual Company? Company { get; set; }
+
+
 }
