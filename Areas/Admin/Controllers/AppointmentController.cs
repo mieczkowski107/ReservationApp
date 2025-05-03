@@ -26,7 +26,7 @@ public class AppointmentController(IUnitOfWork unitOfWork) : Controller
             return NotFound();
         }
 
-        if (!RoleService.IsAdmin(User) && appointment.Service!.Company!.OwnerId != RoleService.GetUserId(User))
+        if (!UserService.IsAdmin(User) && appointment.Service!.Company!.OwnerId != UserService.GetUserId(User))
         {
             return NotFound();
         }
@@ -56,7 +56,7 @@ public class AppointmentController(IUnitOfWork unitOfWork) : Controller
             return NotFound();
         }
 
-        if (!RoleService.IsAdmin(User) && appointment.Service!.Company!.OwnerId != RoleService.GetUserId(User))
+        if (!UserService.IsAdmin(User) && appointment.Service!.Company!.OwnerId != UserService.GetUserId(User))
         {
             return NotFound();
         }
@@ -85,7 +85,7 @@ public class AppointmentController(IUnitOfWork unitOfWork) : Controller
             return NotFound();
         }
 
-        if (!RoleService.IsAdmin(User) && appointment.Service!.Company!.OwnerId != RoleService.GetUserId(User))
+        if (!UserService.IsAdmin(User) && appointment.Service!.Company!.OwnerId != UserService.GetUserId(User))
         {
             return NotFound();
         }
@@ -112,7 +112,7 @@ public class AppointmentController(IUnitOfWork unitOfWork) : Controller
             return NotFound();
         }
 
-        if (!RoleService.IsAdmin(User) && appointment.Service!.Company!.OwnerId != RoleService.GetUserId(User))
+        if (!UserService.IsAdmin(User) && appointment.Service!.Company!.OwnerId != UserService.GetUserId(User))
         {
             return NotFound();
         }

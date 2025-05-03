@@ -3,7 +3,7 @@ using System.Security.Claims;
 
 namespace ReservationApp.Services;
 
-public static class RoleService
+public static class UserService
 {
     public static bool IsAdmin(ClaimsPrincipal user)
     {

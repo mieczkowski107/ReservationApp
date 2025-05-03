@@ -22,7 +22,7 @@ public class ReportController(IUnitOfWork unitOfWork, IReportService reportServi
         Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid userId);
         var reportFormVm = new ReportFormVM
         {
-            CompanyList = _unitOfWork.Companies.GetAll( u => RoleService.IsAdmin(User)
+            CompanyList = _unitOfWork.Companies.GetAll( u => UserService.IsAdmin(User)
                                                              || u.OwnerId == userId).Select(i => new SelectListItem
             {
                 Text = i.Name,
@@ -37,7 +37,7 @@ public class ReportController(IUnitOfWork unitOfWork, IReportService reportServi
     public IActionResult Result(ReportFormVM reportFormVm)
     {
         Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid userId);
-        var report = _unitOfWork.Report.Get(p => (RoleService.IsAdmin(User) || p.Company!.OwnerId == userId)
+        var report = _unitOfWork.Report.Get(p => (UserService.IsAdmin(User) || p.Company!.OwnerId == userId)
                                                  && p.CompanyId == reportFormVm.CompanyId
                                                  && p.StartRangeDate == reportFormVm.StartRangeDate && p.EndRangeDate == reportFormVm.EndRangeDate);
         if (report == null)
@@ -53,7 +53,7 @@ public class ReportController(IUnitOfWork unitOfWork, IReportService reportServi
     public IActionResult DownloadReport(int reportId)
     {
         Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid userId);
-        var report = _unitOfWork.Report.Get(p => p.Id == reportId && (RoleService.IsAdmin(User) || p.Company!.OwnerId == userId),
+        var report = _unitOfWork.Report.Get(p => p.Id == reportId && (UserService.IsAdmin(User) || p.Company!.OwnerId == userId),
                                             includeProperties: nameof(Company),
                                             tracked: true);
         if(report == null)

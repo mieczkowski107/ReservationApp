@@ -20,9 +20,9 @@ public class ServiceController(IUnitOfWork _unitOfWork) : Controller
         }
         Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid userId);
         List<Service> services;
-        services = _unitOfWork.Services.GetAll(u => u.CompanyId == (int)id && (u.Company!.OwnerId == userId || RoleService.IsAdmin(User)), includeProperties: nameof(Company)).ToList();
+        services = _unitOfWork.Services.GetAll(u => u.CompanyId == (int)id && (u.Company!.OwnerId == userId || UserService.IsAdmin(User)), includeProperties: nameof(Company)).ToList();
 
-        var company = _unitOfWork.Companies.Get(u => u.Id == id && (u.OwnerId == userId || RoleService.IsAdmin(User)));
+        var company = _unitOfWork.Companies.Get(u => u.Id == id && (u.OwnerId == userId || UserService.IsAdmin(User)));
 
         if (company == null)
         {
@@ -48,7 +48,7 @@ public class ServiceController(IUnitOfWork _unitOfWork) : Controller
         {
             return NotFound();
         }
-        if (!RoleService.IsAdmin(User))
+        if (!UserService.IsAdmin(User))
         {
             Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid userId);
             if (userCompany.OwnerId != userId)
@@ -79,7 +79,7 @@ public class ServiceController(IUnitOfWork _unitOfWork) : Controller
             return NotFound();
         }
 
-        if (!RoleService.IsAdmin(User))
+        if (!UserService.IsAdmin(User))
         {
             Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid userId);
             if (serviceObj.Company?.OwnerId != userId)
@@ -101,7 +101,7 @@ public class ServiceController(IUnitOfWork _unitOfWork) : Controller
         {
             Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid userId);
             var services = _unitOfWork.Services.GetAll(u => u.CompanyId == service.CompanyId, includeProperties: nameof(Company), tracked: false).ToList();
-            if (!RoleService.IsAdmin(User))
+            if (!UserService.IsAdmin(User))
             {
                 if(services.Any())
                 {
@@ -140,7 +140,7 @@ public class ServiceController(IUnitOfWork _unitOfWork) : Controller
         {
             return NotFound();
         }
-        if (!RoleService.IsAdmin(User))
+        if (!UserService.IsAdmin(User))
         {
             Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid userId);
             if (serviceObj.Company?.OwnerId != userId)
@@ -165,7 +165,7 @@ public class ServiceController(IUnitOfWork _unitOfWork) : Controller
         {
             return NotFound();
         }
-        if (!RoleService.IsAdmin(User))
+        if (!UserService.IsAdmin(User))
         {
             Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid userId);
             if (serviceObj.Company?.OwnerId != userId)

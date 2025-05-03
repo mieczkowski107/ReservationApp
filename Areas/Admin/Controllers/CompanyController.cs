@@ -13,7 +13,7 @@ namespace ReservationApp.Areas.Admin.Controllers;
 
 [Area("Admin")]
 [Authorize(Roles = "Admin,CompanyManager")]
-public class CompanyController(IUnitOfWork unitOfWork, IWebHostEnvironment hostEnvironment)
+public class CompanyController(IUnitOfWork _unitOfWork, IWebHostEnvironment _hostEnvironment)
     : Controller
 {
     public IActionResult Index()
@@ -21,23 +21,23 @@ public class CompanyController(IUnitOfWork unitOfWork, IWebHostEnvironment hostE
         List<Company> companies = new();
         if (User.IsInRole(Role.Admin.ToString()))
         {
-            companies = unitOfWork.Companies.GetAll(includeProperties: "Category").ToList();
+            companies = _unitOfWork.Companies.GetAll(includeProperties: "Category").ToList();
 
         }
         else if (User.IsInRole(Role.CompanyManager.ToString()))
         {
             Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid ownerId);
-            companies = unitOfWork.Companies.GetAll(u => u.OwnerId == ownerId, includeProperties: "Category").ToList();
+            companies = _unitOfWork.Companies.GetAll(u => u.OwnerId == ownerId, includeProperties: "Category").ToList();
         }
         return View(companies);
     }
 
     public IActionResult Upsert(int? id)
     {
-        if (!RoleService.IsAdmin(User))
+        if (!UserService.IsAdmin(User))
         {
             Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid userId);
-            var userCompanies = unitOfWork.Companies.GetAll(u => u.OwnerId == userId).Select(c => c.Id);
+            var userCompanies = _unitOfWork.Companies.GetAll(u => u.OwnerId == userId).Select(c => c.Id);
             if(id.HasValue)
             {
                 if (!userCompanies.Contains(id.Value))
@@ -56,7 +56,7 @@ public class CompanyController(IUnitOfWork unitOfWork, IWebHostEnvironment hostE
         var companyVm = new CompanyVM()
         {
             Company = new Company(),
-            CategoryList = unitOfWork.Categories.GetAll().Select(i => new SelectListItem
+            CategoryList = _unitOfWork.Categories.GetAll().Select(i => new SelectListItem
             {
                 Text = i.Name,
                 Value = i.Id.ToString()
@@ -68,7 +68,7 @@ public class CompanyController(IUnitOfWork unitOfWork, IWebHostEnvironment hostE
         }
         else
         {
-            companyVm.Company = unitOfWork.Companies.Get(c => c.Id == id);
+            companyVm.Company = _unitOfWork.Companies.Get(c => c.Id == id);
             if (companyVm.Company == null)
             {
                 return NotFound();
@@ -83,7 +83,7 @@ public class CompanyController(IUnitOfWork unitOfWork, IWebHostEnvironment hostE
     {
         if (ModelState.IsValid)
         {
-            string wwwRootPath = hostEnvironment.WebRootPath;
+            string wwwRootPath = _hostEnvironment.WebRootPath;
             if (file != null)
             {
                 string fileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
@@ -115,15 +115,15 @@ public class CompanyController(IUnitOfWork unitOfWork, IWebHostEnvironment hostE
 
             if (companyVm.Company.Id == 0)
             {
-                unitOfWork.Companies.Add(companyVm.Company!);
+                _unitOfWork.Companies.Add(companyVm.Company!);
                 TempData["success"] = "Company added successfully!";
             }
             else
             {
-                unitOfWork.Companies.Update(companyVm.Company);
+                _unitOfWork.Companies.Update(companyVm.Company);
                 TempData["success"] = "Company updated successfully!";
             }
-            unitOfWork.Save();
+            _unitOfWork.Save();
             return RedirectToAction("Index");
         }
         else
@@ -139,16 +139,16 @@ public class CompanyController(IUnitOfWork unitOfWork, IWebHostEnvironment hostE
         {
             return NotFound();
         }
-        if (!RoleService.IsAdmin(User))
+        if (!UserService.IsAdmin(User))
         {
             Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid userId);
-            var userCompanies = unitOfWork.Companies.GetAll(u => u.OwnerId == userId).Select(c => c.Id);
+            var userCompanies = _unitOfWork.Companies.GetAll(u => u.OwnerId == userId).Select(c => c.Id);
             if (!userCompanies.Contains(id.Value))
             {
                 return Forbid();
             }
         }
-        var company = unitOfWork.Companies.Get(c => c.Id == id, includeProperties: nameof(Category));
+        var company = _unitOfWork.Companies.Get(c => c.Id == id, includeProperties: nameof(Category));
         if (company == null)
         {
             return NotFound();
@@ -159,23 +159,23 @@ public class CompanyController(IUnitOfWork unitOfWork, IWebHostEnvironment hostE
     [HttpPost]
     public IActionResult Delete(int id)
     {
-        if (!RoleService.IsAdmin(User))
+        if (!UserService.IsAdmin(User))
         {
             Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid userId);
-            var userCompanies = unitOfWork.Companies.GetAll(u => u.OwnerId == userId).Select(c => c.Id);
+            var userCompanies = _unitOfWork.Companies.GetAll(u => u.OwnerId == userId).Select(c => c.Id);
             if (!userCompanies.Contains(id))
             {
                 return Forbid();
             }
         }
-        var objFromDb = unitOfWork.Companies.Get(c => c.Id == id, includeProperties: nameof(Category));
+        var objFromDb = _unitOfWork.Companies.Get(c => c.Id == id, includeProperties: nameof(Category));
         if (objFromDb == null)
         {
             TempData["error"] = "Error while deleting company";
             return RedirectToAction(nameof(Index));
         }
-        unitOfWork.Companies.Remove(objFromDb);
-        unitOfWork.Save();
+        _unitOfWork.Companies.Remove(objFromDb);
+        _unitOfWork.Save();
         TempData["success"] = "Company successfully deleted";
         return RedirectToAction(nameof(Index));
     }
@@ -187,13 +187,13 @@ public class CompanyController(IUnitOfWork unitOfWork, IWebHostEnvironment hostE
     {
         if (User.IsInRole(Role.Admin.ToString()))
         {
-            var allObj = unitOfWork.Companies.GetAll();
+            var allObj = _unitOfWork.Companies.GetAll();
             return Json(new { data = allObj });
         }
         else if (User.IsInRole(Role.CompanyManager.ToString()))
         {
             Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid ownerId);
-            var allObj = unitOfWork.Companies.GetAll(c => c.OwnerId == ownerId);
+            var allObj = _unitOfWork.Companies.GetAll(c => c.OwnerId == ownerId);
             return Json(new { data = allObj });
         }
         else
