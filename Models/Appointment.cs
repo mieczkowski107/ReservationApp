@@ -33,6 +33,10 @@ public class Appointment
 
     [ValidateNever]
     public virtual Review? Review { get; set; }
+
+    [ValidateNever]
+    [NotMapped]
+    public DateTime AppointmentDateTime => new(Date.Year, Date.Month, Date.Day, Time.Hour, Time.Minute, Time.Second);
     public bool IsCancelationAvailable()
     {
         var now = DateTime.UtcNow;

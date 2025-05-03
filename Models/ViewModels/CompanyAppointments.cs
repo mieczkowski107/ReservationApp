@@ -4,6 +4,23 @@ namespace ReservationApp.Models.ViewModels;
 
 public class CompanyAppointments
 {
+    private CompanyAppointments(Appointment appointment)
+    {
+        AppointmentId = appointment.Id;
+        CompanyId = appointment.Service!.CompanyId;
+        CompanyName = appointment.Service?.Company?.Name;
+        Date = appointment.Date;
+        Time = appointment.Time;
+        AppointmentStatus = appointment.Status;
+        DurationMinutes = appointment.Service!.DurationMinutes;
+        Price = appointment.Service.Price;
+        ServiceName = appointment.Service.Name;
+        UserFirstName = appointment.User!.FirstName;
+        UserLastName = appointment.User.LastName;
+        UserEmail = appointment.User.Email;
+        UserPhoneNumber = appointment.User.PhoneNumber;
+        IsPrepaymentRequired = appointment.Service.IsPrepaymentRequired;
+    }
     public int AppointmentId { get; set; }
     public int CompanyId { get; set; }
     public string? CompanyName { get; set; }
@@ -22,4 +39,8 @@ public class CompanyAppointments
     public PaymentStatus? PaymentStatus { get; set; }
     public string? PaymentIntentId { get; set; }
 
+    public static CompanyAppointments MapFromAppointment(Appointment appointment)
+    {
+        return new CompanyAppointments(appointment);
+    }
 }

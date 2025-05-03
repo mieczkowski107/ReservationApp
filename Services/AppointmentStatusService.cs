@@ -30,6 +30,7 @@ public class AppointmentStatusService(IServiceProvider serviceProvider) : Backgr
 
                 }
                 _unitOfWork.Appointments.Update(appointment);
+                _unitOfWork.Save();
             }
             await Task.Delay((int)TimeSpan.FromMinutes(60).TotalMilliseconds, stoppingToken);
         }

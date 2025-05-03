@@ -25,42 +25,26 @@ public class AppointmentController(IUnitOfWork unitOfWork) : Controller
         {
             return NotFound();
         }
-        if (!RoleService.IsAdmin(User))
-        {
-            Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid userId);
-            if (appointment.Service.Company.OwnerId != userId)
-            {
-                return NotFound();
-            }
-        }
-        var companyAppointment = new CompanyAppointments()
-        {
-            AppointmentId = appointment.Id,
-            CompanyId = appointment.Service!.CompanyId,
-            CompanyName = appointment.Service?.Company?.Name,
-            Date = appointment.Date,
-            Time = appointment.Time,
-            AppointmentStatus = appointment.Status,
-            DurationMinutes = appointment.Service!.DurationMinutes,
-            Price = appointment.Service.Price,
-            ServiceName = appointment.Service.Name,
-            UserFirstName = appointment.User!.FirstName,
-            UserLastName = appointment.User.LastName,
-            UserEmail = appointment.User.Email,
-            UserPhoneNumber = appointment.User.PhoneNumber,
-            IsPrepaymentRequired = appointment.Service.IsPrepaymentRequired,
-        };
 
-        if (!appointment.Service.IsPrepaymentRequired) return View(companyAppointment);
+        if (!RoleService.IsAdmin(User) && appointment.Service!.Company!.OwnerId != RoleService.GetUserId(User))
+        {
+            return NotFound();
+        }
+
+        var companyAppointment = CompanyAppointments.MapFromAppointment(appointment);
+
+        if (appointment.Service!.IsPrepaymentRequired!)
         {
             var payment = unitOfWork.Payment.Get(u => u.AppointmentId == Id);
-            if (payment == null) return View(companyAppointment);
+            if (payment == null)
+            {
+                return View(companyAppointment);
+            }
             companyAppointment.PaymentStatus = payment.Status;
             companyAppointment.PaymentIntentId = payment.PaymentIntentId;
         }
         return View(companyAppointment);
     }
-
 
     // By default, the appointment status is confirmed
     // If someone's forgot to mark the appointment as completed, it will be marked as completed by background job
@@ -71,17 +55,13 @@ public class AppointmentController(IUnitOfWork unitOfWork) : Controller
         {
             return NotFound();
         }
-        if (!RoleService.IsAdmin(User))
+
+        if (!RoleService.IsAdmin(User) && appointment.Service!.Company!.OwnerId != RoleService.GetUserId(User))
         {
-            Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid userId);
-            if (appointment.Service.Company.OwnerId != userId)
-            {
-                return NotFound();
-            }
+            return NotFound();
         }
-        var now = DateTime.UtcNow;
-        var appointmentDateTime = new DateTime(appointment.Date.Year, appointment.Date.Month, appointment.Date.Day, appointment.Time.Hour, appointment.Time.Minute, appointment.Time.Second);
-        if (appointmentDateTime < now)
+
+        if (appointment.AppointmentDateTime < DateTime.UtcNow)
         {
             appointment.Status = AppointmentStatus.Completed;
             TempData["success"] = "Appointment mark as completed succesfully!";
@@ -99,22 +79,18 @@ public class AppointmentController(IUnitOfWork unitOfWork) : Controller
     // It must be marked as no show by the company manager
     public IActionResult MarkAsNoShowAppointment(int id)
     {
-        var appointment = unitOfWork.Appointments.Get(u => u.Id == id, includeProperties: "Service.Company,User", tracked: true);
+        var appointment = unitOfWork.Appointments.Get(u => u.Id == id, includeProperties: "Service.Company,User");
         if (appointment == null)
         {
             return NotFound();
         }
-        if (!RoleService.IsAdmin(User))
+
+        if (!RoleService.IsAdmin(User) && appointment.Service!.Company!.OwnerId != RoleService.GetUserId(User))
         {
-            Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid userId);
-            if (appointment.Service.Company.OwnerId != userId)
-            {
-                return NotFound();
-            }
+            return NotFound();
         }
-        var now = DateTime.UtcNow;
-        var appointmentDateTime = new DateTime(appointment.Date.Year, appointment.Date.Month, appointment.Date.Day, appointment.Time.Hour, appointment.Time.Minute, appointment.Time.Second);
-        if (appointmentDateTime < now)
+
+        if (appointment.AppointmentDateTime < DateTime.UtcNow)
         {
             appointment.Status = AppointmentStatus.NoShow;
             TempData["success"] = "Appointment mark as no show succesfully!";
@@ -135,14 +111,12 @@ public class AppointmentController(IUnitOfWork unitOfWork) : Controller
         {
             return NotFound();
         }
-        if (!RoleService.IsAdmin(User))
+
+        if (!RoleService.IsAdmin(User) && appointment.Service!.Company!.OwnerId != RoleService.GetUserId(User))
         {
-            Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid userId);
-            if (appointment.Service.Company.OwnerId != userId)
-            {
-                return NotFound();
-            }
+            return NotFound();
         }
+
         if (!appointment.IsCancelationAvailable())
         {
             TempData["error"] = "Appointment already passed or it is too late to cancel appointment";
@@ -150,7 +124,7 @@ public class AppointmentController(IUnitOfWork unitOfWork) : Controller
         }
 
 
-        if (appointment.Service.IsPrepaymentRequired)
+        if (appointment.Service!.IsPrepaymentRequired)
         {
             var payment = unitOfWork.Payment.Get(u => u.AppointmentId == id);
             if (payment is null)
@@ -190,30 +164,15 @@ public class AppointmentController(IUnitOfWork unitOfWork) : Controller
         var appointments = unitOfWork.Appointments.GetAll(
             u => u.Service.CompanyId == Id,
             includeProperties: "Service.Company,User").ToList();
-        if (User.IsInRole(Role.CompanyManager.ToString()) )
+        if (User.IsInRole(Role.CompanyManager.ToString()))
         {
             Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid userId);
             appointments = appointments.Where(u => u.Service.Company.OwnerId == userId).ToList();
         }
 
-
         foreach (var appointment in appointments)
         {
-            var companyAppointment = new CompanyAppointments()
-            {
-                AppointmentId = appointment.Id,
-                CompanyId = appointment.Service.CompanyId,
-                Date = appointment.Date,
-                Time = appointment.Time,
-                AppointmentStatus = appointment.Status,
-                ServiceName = appointment.Service.Name,
-                UserFirstName = appointment.User.FirstName,
-                UserLastName = appointment.User.LastName,
-                UserEmail = appointment.User.Email,
-                UserPhoneNumber = appointment.User.PhoneNumber,
-                IsPrepaymentRequired = appointment.Service.IsPrepaymentRequired,
-
-            };
+            var companyAppointment = CompanyAppointments.MapFromAppointment(appointment);
             companyAppointments.Add(companyAppointment);
         }
         return Json(new { data = companyAppointments });
