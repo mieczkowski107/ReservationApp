@@ -7,11 +7,11 @@ namespace ReservationApp.Areas.Admin.Controllers;
 
 [Area("Admin")]
 [Authorize(Roles = "Admin")]
-public class CategoryController(IUnitOfWork unitOfWork) : Controller
+public class CategoryController(IUnitOfWork _unitOfWork) : Controller
 {
     public IActionResult Index()
     {
-        var categories = unitOfWork.Categories.GetAll().ToList();
+        var categories = _unitOfWork.Categories.GetAll().ToList();
         return View(categories);
     }
 
@@ -22,7 +22,7 @@ public class CategoryController(IUnitOfWork unitOfWork) : Controller
             return View(new Category());
         }
 
-        var category = unitOfWork.Categories.Get(c => c.Id == categoryId);
+        var category = _unitOfWork.Categories.Get(c => c.Id == categoryId);
 
         if (category == null)
         {
@@ -39,15 +39,15 @@ public class CategoryController(IUnitOfWork unitOfWork) : Controller
         {
             if (category?.Id == 0 || category?.Id == null)
             {
-                unitOfWork.Categories.Add(category!);
+                _unitOfWork.Categories.Add(category!);
                 TempData["success"] = "Category added succesffuly!";
             }
             else
             {
-                unitOfWork.Categories.Update(category);
+                _unitOfWork.Categories.Update(category);
                 TempData["success"] = "Category updated succesffuly!";
             }
-            unitOfWork.Save();
+            _unitOfWork.Save();
             return RedirectToAction("Index");
         }
         else
@@ -62,7 +62,7 @@ public class CategoryController(IUnitOfWork unitOfWork) : Controller
         {
             return NotFound();
         }
-        var category = unitOfWork.Categories.Get(c => c.Id == categoryId);
+        var category = _unitOfWork.Categories.Get(c => c.Id == categoryId);
         if (category == null)
         {
             return NotFound();
@@ -73,8 +73,8 @@ public class CategoryController(IUnitOfWork unitOfWork) : Controller
     [HttpPost]
     public IActionResult Delete(int id)
     {
-        var objFromDb = unitOfWork.Categories.Get(c => c.Id == id);
-        var companies = unitOfWork.Companies.GetAll(u=>u.CategoryId == id, includeProperties:nameof(Category));
+        var objFromDb = _unitOfWork.Categories.Get(c => c.Id == id);
+        var companies = _unitOfWork.Companies.GetAll(u=>u.CategoryId == id, includeProperties:nameof(Category));
         if (objFromDb == null)
         {
             TempData["error"] = "Error while deleting";
@@ -83,8 +83,8 @@ public class CategoryController(IUnitOfWork unitOfWork) : Controller
         }
         if(!companies.Any())
         {
-            unitOfWork.Categories.Remove(objFromDb);
-            unitOfWork.Save();
+            _unitOfWork.Categories.Remove(objFromDb);
+            _unitOfWork.Save();
             TempData["success"] = "Category successfully deleted";
         }
         else
@@ -92,7 +92,6 @@ public class CategoryController(IUnitOfWork unitOfWork) : Controller
             TempData["error"] = "Can not delete a category if it is assigned to any company";
         }
 
-        
         return RedirectToAction(nameof(Index));
     }
 
@@ -101,7 +100,7 @@ public class CategoryController(IUnitOfWork unitOfWork) : Controller
     [HttpGet]
     public IActionResult GetAll()
     {
-        var allObj = unitOfWork.Categories.GetAll();
+        var allObj = _unitOfWork.Categories.GetAll();
         return Json(new { data = allObj });
     }
     
