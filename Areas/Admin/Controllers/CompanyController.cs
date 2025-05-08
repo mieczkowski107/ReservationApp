@@ -5,6 +5,7 @@ using ReservationApp.Data.Repository.IRepository;
 using ReservationApp.Models;
 using ReservationApp.Models.ViewModels;
 using ReservationApp.Services;
+using ReservationApp.Services.Interfaces;
 using ReservationApp.Utility.Enums;
 using System.Security.Claims;
 
@@ -13,22 +14,23 @@ namespace ReservationApp.Areas.Admin.Controllers;
 
 [Area("Admin")]
 [Authorize(Roles = "Admin,CompanyManager")]
-public class CompanyController(IUnitOfWork _unitOfWork, IWebHostEnvironment _hostEnvironment)
+public class CompanyController(IUnitOfWork _unitOfWork, IWebHostEnvironment _hostEnvironment, IImageService _imageService)
     : Controller
 {
+
     public IActionResult Index()
     {
-        List<Company> companies = new();
-        if (User.IsInRole(Role.Admin.ToString()))
+        var companies = _unitOfWork.Companies.GetAll(includeProperties: nameof(Category)).ToList();
+        if (!UserService.IsAdmin(User) && !companies.Any(u => u.OwnerId == UserService.GetUserId(User)))
         {
-            companies = _unitOfWork.Companies.GetAll(includeProperties: "Category").ToList();
+            return NotFound();
+        }
+        if (UserService.IsCompanyManager(User))
+        {
+            var userId = UserService.GetUserId(User);
+            companies = _unitOfWork.Companies.GetAll(u => u.OwnerId == userId, includeProperties: "Category").ToList();
+        }
 
-        }
-        else if (User.IsInRole(Role.CompanyManager.ToString()))
-        {
-            Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid ownerId);
-            companies = _unitOfWork.Companies.GetAll(u => u.OwnerId == ownerId, includeProperties: "Category").ToList();
-        }
         return View(companies);
     }
 
@@ -36,9 +38,9 @@ public class CompanyController(IUnitOfWork _unitOfWork, IWebHostEnvironment _hos
     {
         if (!UserService.IsAdmin(User))
         {
-            Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid userId);
+            var userId = UserService.GetUserId(User);
             var userCompanies = _unitOfWork.Companies.GetAll(u => u.OwnerId == userId).Select(c => c.Id);
-            if(id.HasValue)
+            if (id.HasValue)
             {
                 if (!userCompanies.Contains(id.Value))
                 {
@@ -79,42 +81,16 @@ public class CompanyController(IUnitOfWork _unitOfWork, IWebHostEnvironment _hos
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult Upsert(CompanyVM companyVm, IFormFile? file)
+    public IActionResult Upsert(CompanyVM companyVm, IFormFile file)
     {
         if (ModelState.IsValid)
         {
-            string wwwRootPath = _hostEnvironment.WebRootPath;
-            if (file != null)
+            _imageService.ImageUpload(companyVm, file);
+         
+            if (companyVm.Company.OwnerId == null)
             {
-                string fileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
-                string imgPath = Path.Combine(wwwRootPath, @"images\company");
-                if (!string.IsNullOrEmpty(companyVm.Company?.ImageUrl))
-                {
-                    string oldImagePath = Path.Combine(wwwRootPath, companyVm.Company.ImageUrl.TrimStart('\\'));
-                    if (System.IO.File.Exists(oldImagePath))
-                    {
-                        System.IO.File.Delete(oldImagePath);
-                    }
-                }
-                using (var fileStream = new FileStream(Path.Combine(imgPath, fileName), FileMode.Create))
-                {
-                    file.CopyTo(fileStream);
-                }
-                companyVm.Company!.ImageUrl = @"\images\company\" + fileName;
-            }
-            else if (companyVm.Company!.ImageUrl == null)
-            {
-                companyVm.Company.ImageUrl = @"\images\company\Temporary.jpg";
-            }
-
-            if (companyVm.Company.OwnerId == null && User.IsInRole(Role.CompanyManager.ToString()))
-            {
-                Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid ownerId);
-                companyVm.Company.OwnerId = ownerId;
-            }
-
-            if (companyVm.Company.Id == 0)
-            {
+                var userId = UserService.GetUserId(User);
+                companyVm.Company.OwnerId = userId;
                 _unitOfWork.Companies.Add(companyVm.Company!);
                 TempData["success"] = "Company added successfully!";
             }
@@ -135,13 +111,13 @@ public class CompanyController(IUnitOfWork _unitOfWork, IWebHostEnvironment _hos
 
     public IActionResult Delete(int? id)
     {
-        if(id == null)
+        if (id == null)
         {
             return NotFound();
         }
         if (!UserService.IsAdmin(User))
         {
-            Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid userId);
+            var userId = UserService.GetUserId(User);
             var userCompanies = _unitOfWork.Companies.GetAll(u => u.OwnerId == userId).Select(c => c.Id);
             if (!userCompanies.Contains(id.Value))
             {
@@ -161,7 +137,7 @@ public class CompanyController(IUnitOfWork _unitOfWork, IWebHostEnvironment _hos
     {
         if (!UserService.IsAdmin(User))
         {
-            Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid userId);
+            var userId = UserService.GetUserId(User);
             var userCompanies = _unitOfWork.Companies.GetAll(u => u.OwnerId == userId).Select(c => c.Id);
             if (!userCompanies.Contains(id))
             {
@@ -176,6 +152,8 @@ public class CompanyController(IUnitOfWork _unitOfWork, IWebHostEnvironment _hos
         }
         _unitOfWork.Companies.Remove(objFromDb);
         _unitOfWork.Save();
+        _imageService.DeleteImage(objFromDb!.ImageUrl!);
+
         TempData["success"] = "Company successfully deleted";
         return RedirectToAction(nameof(Index));
     }
@@ -185,21 +163,18 @@ public class CompanyController(IUnitOfWork _unitOfWork, IWebHostEnvironment _hos
     [HttpGet]
     public IActionResult GetAll()
     {
-        if (User.IsInRole(Role.Admin.ToString()))
+        if (UserService.IsAdmin(User))
         {
             var allObj = _unitOfWork.Companies.GetAll();
             return Json(new { data = allObj });
         }
-        else if (User.IsInRole(Role.CompanyManager.ToString()))
-        {
-            Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid ownerId);
-            var allObj = _unitOfWork.Companies.GetAll(c => c.OwnerId == ownerId);
-            return Json(new { data = allObj });
-        }
         else
         {
-            return Json(new { data = "" });
+            var userId = UserService.GetUserId(User);
+            var allObj = _unitOfWork.Companies.GetAll(c => c.OwnerId == userId);
+            return Json(new { data = allObj });
         }
+
     }
 
     #endregion

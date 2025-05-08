@@ -75,7 +75,7 @@ namespace ReservationApp
                 // User settings.
                 options.User.AllowedUserNameCharacters =
                 "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
-                options.User.RequireUniqueEmail = false;
+                options.User.RequireUniqueEmail = true;
             });
 
             builder.Services.ConfigureApplicationCookie(options =>
@@ -94,6 +94,7 @@ namespace ReservationApp
             builder.Services.AddScoped<IEmailSender, EmailSender>();
             builder.Services.AddScoped<IServiceProvider, ServiceProvider>();
             builder.Services.AddScoped<IReportService, ReportService>();
+            builder.Services.AddScoped<IImageService, CompanyImageService>();
             #endregion
 
             #region Stripe
@@ -128,7 +129,6 @@ namespace ReservationApp
             
             #endregion
 
-
             // Configure the HTTP request pipeline.
             if (!app.Environment.IsDevelopment())
             {
@@ -137,16 +137,15 @@ namespace ReservationApp
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
-
             app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseRouting();
             app.UseAuthentication();
             app.UseAuthorization();
 
-            //app.UseSerilogRequestLogging();
+            app.UseSerilogRequestLogging();
             app.UseSerilogUi(options=> options.HideSerilogUiBrand()
-                                              .WithAuthenticationType(AuthenticationType.Jwt));
+                                              .WithAuthenticationType(AuthenticationType.Custom));
             app.UseHangfireDashboard("/hangfire");
 
             app.MapRazorPages();
