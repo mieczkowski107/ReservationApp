@@ -4,6 +4,7 @@ using ReservationApp.Data.Repository.IRepository;
 using ReservationApp.Models;
 using ReservationApp.Services.Interfaces;
 using ReservationApp.Utility.Enums;
+using System.Linq;
 
 namespace ReservationApp.Services;
 
@@ -21,31 +22,16 @@ public class ReportService : IReportService
     public Report GetReport(int companyId, DateOnly startDate, DateOnly endDate)
     {
         var filteredAppointments = _unitOfWork.Appointments.GetAll(
-            p => p.Service.CompanyId == companyId && p.Date >= startDate && p.Date <= endDate,
+            p => p.Service!.CompanyId == companyId
+            && p.Date >= startDate
+            && p.Date <= endDate,
             includeProperties: "Service.Company,Review"
         );
-        var previousClients = _unitOfWork.Appointments
-            .GetAll(p => p.Service.CompanyId == companyId && p.Date < startDate)
-            .Select(p => p.UserId)
-            .Distinct();
+        var previousAppointments = _unitOfWork.Appointments
+            .GetAll(p => p.Service!.CompanyId == companyId
+            && p.Date < startDate, includeProperties: nameof(Service));
 
-        var uniqueClients = filteredAppointments.Select(p => p.UserId).Distinct();
-        var newClients = uniqueClients.Except(previousClients).Count();
-
-        var report = new Report
-        {
-            CompanyId = companyId,
-            StartRangeDate = startDate,
-            EndRangeDate = endDate,
-            Income = filteredAppointments.Sum(p => p.Service.Price),
-            Appointments = filteredAppointments.Count(),
-            DeletedAppointments = filteredAppointments.Count(p => p.Status == AppointmentStatus.Cancelled),
-            NoShowAppointments = filteredAppointments.Count(p => p.Status == AppointmentStatus.NoShow),
-            TotalClients = filteredAppointments.Count() - filteredAppointments.Count(p => p.Status == AppointmentStatus.Cancelled),
-            UniqueClients = uniqueClients.Count(),
-            NewClients = newClients,
-            AvgRating = filteredAppointments.Any() ? (decimal?)filteredAppointments.Average(p => p.Review?.Rating) : null
-        };
+        var report = Report.CreateReport(companyId, startDate, endDate, filteredAppointments, previousAppointments);
 
         return report;
     }

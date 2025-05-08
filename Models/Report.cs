@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using Microsoft.EntityFrameworkCore;
+using ReservationApp.Utility.Enums;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -32,6 +33,58 @@ public class Report
 
     [ForeignKey("CompanyId")]
     public virtual Company? Company { get; set; }
+
+    public static Report CreateReport(
+      int companyId,
+      DateOnly startDate,
+      DateOnly endDate,
+      IEnumerable<Appointment> appointmentsInRangeDate,
+      IEnumerable<Appointment> appointmentsBefore)
+    {
+        var inRangeList = appointmentsInRangeDate.ToList();
+        var beforeList = appointmentsBefore.ToList();
+
+        var previousClients = beforeList
+            .Where(p => p.Service!.CompanyId == companyId && p.Date < startDate)
+            .Select(p => p.UserId)
+            .Distinct()
+            .ToHashSet(); 
+
+  
+        var uniqueClients = inRangeList
+            .Select(p => p.UserId)
+            .Distinct()
+            .ToList();
+
+        int newClients = uniqueClients.Count(userId => !previousClients.Contains(userId));
+
+
+        int totalAppointments = inRangeList.Count;
+        int cancelledAppointments = inRangeList.Count(p => p.Status == AppointmentStatus.Cancelled);
+        int noShowAppointments = inRangeList.Count(p => p.Status == AppointmentStatus.NoShow);
+        int totalClients = totalAppointments - cancelledAppointments;
+
+        decimal? avgRating = inRangeList.Any()
+            ? (decimal?)inRangeList.Average(p => p.Review?.Rating)
+            : null;
+
+        decimal income = inRangeList.Sum(p => p.Service!.Price);
+
+        return new Report
+        {
+            CompanyId = companyId,
+            StartRangeDate = startDate,
+            EndRangeDate = endDate,
+            Income = income,
+            Appointments = totalAppointments,
+            DeletedAppointments = cancelledAppointments,
+            NoShowAppointments = noShowAppointments,
+            TotalClients = totalClients,
+            UniqueClients = uniqueClients.Count,
+            NewClients = newClients,
+            AvgRating = avgRating
+        };
+    }
 
 
 }
