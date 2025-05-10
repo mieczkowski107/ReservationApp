@@ -5,7 +5,7 @@ namespace ReservationApp.Data.Repository
 {
     public class UnitOfWork : IUnitOfWork
     {
-        private ApplicationDbContext _db;
+        private readonly ApplicationDbContext _db;
         public ICategoryRepository Categories { get; private set; }
         public ICompanyRepository Companies { get; private set; }
         public IServiceRepository Services { get; private set; }
