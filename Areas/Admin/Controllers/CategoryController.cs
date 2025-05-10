@@ -74,7 +74,7 @@ public class CategoryController(IUnitOfWork _unitOfWork) : Controller
     public IActionResult Delete(int id)
     {
         var objFromDb = _unitOfWork.Categories.Get(c => c.Id == id);
-        var companies = _unitOfWork.Companies.GetAll(u=>u.CategoryId == id, includeProperties:nameof(Category));
+        var companies = _unitOfWork.Companies.GetAll(u=>u.CategoryId == id);
         if (objFromDb == null)
         {
             TempData["error"] = "Error while deleting";
