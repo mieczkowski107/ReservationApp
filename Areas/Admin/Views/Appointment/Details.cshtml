@@ -1,5 +1,5 @@
 ﻿@using ReservationApp.Utility.Enums
-@model CompanyAppointments
+@model CompanyAppointmentsVM
 <h3 class="p-2">
     Appointment details:
 </h3>
@@ -84,14 +84,7 @@
                             <button type="button" class="btn btn-danger btn-block m-1" data-bs-toggle="modal" data-bs-target="#cancelModal">
                                 Cancel Appointment
                             </button>
-                        }
-                        @if(Model.PaymentStatus == PaymentStatus.Succeeded)
-                        {
-                              <button type="button" class="btn btn-outline-primary btn-block m-1" data-bs-toggle="modal" data-bs-target="#refundModal">
-                                  Refund Payment
-                              </button>
-                        }
-                      
+                        }                      
                    </div>
                     <div class="modal fade" id="confirmModal" tabindex="-1" role="dialog" aria-labelledby="confirmModalLabel" aria-hidden="true">
                         <div class="modal-dialog" role="document">
@@ -163,31 +156,13 @@
                                 </div>
                                 <div class="modal-footer">
                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                    <a asp-area="Admin" asp-controller="Appointment" asp-action="CancelAppointment" asp-route-Id ="@Model.AppointmentId" class="btn btn-danger">Cancel</a>
+                                    <a asp-area="Admin" asp-controller="Appointment" asp-action="CancelAppointment" asp-route-id ="@Model.AppointmentId" class="btn btn-danger">Cancel</a>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                     <div class="modal fade" id="refundModal" tabindex="-1" role="dialog" aria-labelledby="refundModalLabel" aria-hidden="true">
-                        <div class="modal-dialog" role="document">
-                            <div class="modal-content">
-                                <div class="modal-header text-center">
-                                    <h3 class="text-center">
-                                        refund payment for appointment
-                                    </h3>
-                                </div>
-                                <div class="modal-body text-center">
-                                    Are you sure you want to make a refund for the appointment?
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                    <a asp-area="Admin" asp-controller="Appointment" asp-action="Refund" asp-route-Id ="@Model.AppointmentId" class="btn btn-info">refund</a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
+                  
                    
                     
                 </div>
