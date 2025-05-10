@@ -2,10 +2,11 @@
 using Microsoft.AspNetCore.SignalR;
 using ReservationApp.Data.Repository.IRepository;
 using ReservationApp.Models;
+using ReservationApp.Services.Interfaces;
 using ReservationApp.Utility.Enums;
 
 namespace ReservationApp.Services;
-public class NotificationService 
+public class NotificationService : INotificationService
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IEmailSender _emailSender;
@@ -15,37 +16,43 @@ public class NotificationService
         _emailSender = emailSender;
     }
 
+    public void CreateNotification(NotificationType type, int appointmentId)
+    {
+        var appointment = GetAppointmentDetails(appointmentId);
+        if (appointment.Status != AppointmentStatus.Cancelled)
+        {
+            var details = PrepareNotification(type, appointment);
+            var notification = new Notification
+            {
+                Title = details.title,
+                Message = details.message,
+                AppointmentId = appointmentId,
+                Type = type,
+                Status = NotificationStatus.Created,
+                userEmail = appointment.User!.Email!
+            };
+            SaveNotificationToDb(notification);
+        }
+    }
+    public async Task SendNotification(int appointmentId)
+    {
+        var notification = _unitOfWork.Notification.Get(n => n.AppointmentId == appointmentId && n.Status != NotificationStatus.Sent, tracked: true);
+        if (notification != null)
+        {
+            await _emailSender.SendEmailAsync(notification.userEmail, notification.Title!, notification.Message!);
+            notification.Status = NotificationStatus.Sent;
+            _unitOfWork.Save();
+        }
+    }
     private Appointment GetAppointmentDetails(int appointmentId)
     {
         var appointment = _unitOfWork.Appointments.Get(a => a.Id == appointmentId, includeProperties: "Service.Company,User");
-        if(appointment == null)
+        if (appointment == null)
         {
             throw new Exception("Appointment not found");
         }
         return appointment;
     }
-
-    
-    public void CreateNotification(NotificationType type, int appointmentId)
-    {
-        var appointment = GetAppointmentDetails(appointmentId);
-        if(appointment.Status == AppointmentStatus.Cancelled)
-        {
-            throw new Exception("Appointment is already cancelled or completed");
-        }
-        var details = PrepareNotification(type, appointment);
-        var notification = new Notification
-        {
-            Title = details.title,
-            Message = details.message,
-            AppointmentId = appointmentId,
-            Type = type,
-            Status = NotificationStatus.Created,
-            userEmail = appointment.User!.Email!
-        };
-        SaveNotificationToDb(notification);
-    }
-
     private (string title, string message) PrepareNotification(NotificationType type, Appointment appointment)
     {
         string title = string.Empty;
@@ -77,18 +84,7 @@ public class NotificationService
     }
 
 
-    public async Task SendNotification(int appointmentId)
-    {
-        var notification = _unitOfWork.Notification.Get(n => n.AppointmentId == appointmentId && n.Status != NotificationStatus.Sent, tracked: true);
-        if(notification == null)
-        {
-            throw new Exception("Notification not found");
-        }
-        await _emailSender.SendEmailAsync(notification.userEmail, notification.Title!, notification.Message!);
-       
-        notification.Status = NotificationStatus.Sent;
-        _unitOfWork.Save();
-    }
+    
 
     private void SaveNotificationToDb(Notification notification)
     {

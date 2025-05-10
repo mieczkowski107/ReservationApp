@@ -89,10 +89,10 @@ namespace ReservationApp
             #endregion
 
             #region Scoped Services
-            builder.Services.AddScoped<NotificationService>();
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
             builder.Services.AddScoped<IEmailSender, EmailSender>();
             builder.Services.AddScoped<IServiceProvider, ServiceProvider>();
+            builder.Services.AddScoped<INotificationService, NotificationService>();
             builder.Services.AddScoped<IReportService, ReportService>();
             builder.Services.AddScoped<IImageService, CompanyImageService>();
             builder.Services.AddScoped<IPaymentService, PaymentService>();
