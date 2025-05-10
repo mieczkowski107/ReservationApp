@@ -9,6 +9,7 @@ using Stripe.Checkout;
 
 public class PaymentService(IUnitOfWork unitOfWork) : IPaymentService
 {
+    private const string PaymentSessionStatus = "paid";
     public Session CreateAppointmentSession(Appointment appointment)
     {
         var domain = "https://localhost:7038/";
@@ -64,5 +65,12 @@ public class PaymentService(IUnitOfWork unitOfWork) : IPaymentService
         unitOfWork.Save();
 
         return new RefundResult(true, "Refund processed successfully.");
+    }
+
+    public bool IsPaid(Payment payment, out Session session)
+    {
+        var service = new SessionService();
+        session = service.Get(payment.SessionId);
+        return session.PaymentStatus.ToLower() == PaymentSessionStatus;
     }
 }
