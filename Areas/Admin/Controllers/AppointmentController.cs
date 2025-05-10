@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ReservationApp.Areas.Customer.Controllers;
 using ReservationApp.Data.Repository.IRepository;
+using ReservationApp.Models;
 using ReservationApp.Models.ViewModels;
 using ReservationApp.Services;
 using ReservationApp.Utility.Enums;
@@ -25,23 +27,23 @@ public class AppointmentController(IUnitOfWork unitOfWork) : Controller
         {
             return NotFound();
         }
-
-        if (!UserService.IsAdmin(User) && appointment.Service!.Company!.OwnerId != UserService.GetUserId(User))
+       
+        if (!IsAuthorized(appointment, User))
         {
             return NotFound();
         }
 
-        var companyAppointment = CompanyAppointments.MapFromAppointment(appointment);
+        var companyAppointment = CompanyAppointmentsVM.MapFromAppointment(appointment);
 
         if (appointment.Service!.IsPrepaymentRequired!)
         {
             var payment = unitOfWork.Payment.Get(u => u.AppointmentId == Id);
-            if (payment == null)
+            if (payment != null)
             {
+                companyAppointment.PaymentStatus = payment.Status;
+                companyAppointment.PaymentIntentId = payment.PaymentIntentId;
                 return View(companyAppointment);
             }
-            companyAppointment.PaymentStatus = payment.Status;
-            companyAppointment.PaymentIntentId = payment.PaymentIntentId;
         }
         return View(companyAppointment);
     }
@@ -56,7 +58,7 @@ public class AppointmentController(IUnitOfWork unitOfWork) : Controller
             return NotFound();
         }
 
-        if (!UserService.IsAdmin(User) && appointment.Service!.Company!.OwnerId != UserService.GetUserId(User))
+        if (!IsAuthorized(appointment, User))
         {
             return NotFound();
         }
@@ -85,7 +87,7 @@ public class AppointmentController(IUnitOfWork unitOfWork) : Controller
             return NotFound();
         }
 
-        if (!UserService.IsAdmin(User) && appointment.Service!.Company!.OwnerId != UserService.GetUserId(User))
+        if (!IsAuthorized(appointment, User))
         {
             return NotFound();
         }
@@ -106,13 +108,15 @@ public class AppointmentController(IUnitOfWork unitOfWork) : Controller
     // Cancel the appointment
     public IActionResult CancelAppointment(int id)
     {
-        var appointment = unitOfWork.Appointments.Get(u => u.Id == id, includeProperties: "Service.Company,User", tracked: true);
+        var appointment = unitOfWork.Appointments.Get(u => u.Id == id,
+                                                      includeProperties: "Service.Company,User",
+                                                      tracked: true);
         if (appointment == null)
         {
             return NotFound();
         }
 
-        if (!UserService.IsAdmin(User) && appointment.Service!.Company!.OwnerId != UserService.GetUserId(User))
+        if (!IsAuthorized(appointment, User))
         {
             return NotFound();
         }
@@ -122,7 +126,6 @@ public class AppointmentController(IUnitOfWork unitOfWork) : Controller
             TempData["error"] = "Appointment already passed or it is too late to cancel appointment";
             return RedirectToAction(nameof(Details), new { id });
         }
-
 
         if (appointment.Service!.IsPrepaymentRequired)
         {
@@ -134,15 +137,7 @@ public class AppointmentController(IUnitOfWork unitOfWork) : Controller
             //TODO: Need to extract refund logic to a separate method and call it here
             if (payment.Status == PaymentStatus.Succeeded)
             {
-                var options = new RefundCreateOptions
-                {
-                    Reason = RefundReasons.RequestedByCustomer,
-                    PaymentIntent = payment.PaymentIntentId,
-                };
-                var service = new RefundService();
-                service.Create(options);
-                unitOfWork.Payment.UpdateStatus(id, AppointmentStatus.Cancelled, PaymentStatus.Refunded);
-                TempData["success"] = "Your appointment has been cancelled and money will be refunded in next few days.";
+                return RedirectToAction("AppointmentRefund", "Payment", new {Area = "Customer",appointmentId = id });
             }
         }
         else
@@ -158,24 +153,33 @@ public class AppointmentController(IUnitOfWork unitOfWork) : Controller
     }
 
     #region APICALLS
-    public IActionResult GetCompanyAppointments(int Id)
+    public  IActionResult GetCompanyAppointments(int Id)
     {
-        List<CompanyAppointments> companyAppointments = [];
-        var appointments = unitOfWork.Appointments.GetAll(
-            u => u.Service.CompanyId == Id,
-            includeProperties: "Service.Company,User").ToList();
-        if (User.IsInRole(Role.CompanyManager.ToString()))
-        {
-            Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid userId);
-            appointments = appointments.Where(u => u.Service.Company.OwnerId == userId).ToList();
-        }
+        var userId = UserService.GetUserId(User);
+        var isManager = UserService.IsCompanyManager(User);
 
-        foreach (var appointment in appointments)
-        {
-            var companyAppointment = CompanyAppointments.MapFromAppointment(appointment);
-            companyAppointments.Add(companyAppointment);
-        }
+        var appointments =  unitOfWork.Appointments.GetAll(
+            u => u.Service.CompanyId == Id &&
+                 (!isManager || u.Service.Company.OwnerId == userId),
+            includeProperties: "Service.Company,User").ToList();
+
+        var companyAppointments = appointments
+            .Select(CompanyAppointmentsVM.MapFromAppointment)
+            .ToList();
+
         return Json(new { data = companyAppointments });
     }
+
     #endregion
+    private bool IsAuthorized(Appointment appointment, ClaimsPrincipal User)
+    {
+        var userId = UserService.GetUserId(User);
+        bool isAuthorized = UserService.IsAdmin(User) || appointment.Service!.Company!.OwnerId == userId;
+
+        if (!isAuthorized)
+        {
+            return false;
+        }
+        return true;
+    }
 }
