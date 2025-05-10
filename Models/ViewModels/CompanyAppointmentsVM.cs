@@ -2,9 +2,9 @@
 
 namespace ReservationApp.Models.ViewModels;
 
-public class CompanyAppointments
+public class CompanyAppointmentsVM
 {
-    private CompanyAppointments(Appointment appointment)
+    private CompanyAppointmentsVM(Appointment appointment)
     {
         AppointmentId = appointment.Id;
         CompanyId = appointment.Service!.CompanyId;
@@ -39,8 +39,8 @@ public class CompanyAppointments
     public PaymentStatus? PaymentStatus { get; set; }
     public string? PaymentIntentId { get; set; }
 
-    public static CompanyAppointments MapFromAppointment(Appointment appointment)
+    public static CompanyAppointmentsVM MapFromAppointment(Appointment appointment)
     {
-        return new CompanyAppointments(appointment);
+        return new CompanyAppointmentsVM(appointment);
     }
 }
