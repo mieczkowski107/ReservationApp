@@ -13,6 +13,10 @@ public static class UserService
     {
         return user.IsInRole(Role.CompanyManager.ToString());
     }
+    public static bool IsCustomer(ClaimsPrincipal user)
+    {
+        return user.IsInRole(Role.Customer.ToString());
+    }
     public static Guid GetUserId(ClaimsPrincipal user)
     {
         Guid.TryParse(user.FindFirstValue(ClaimTypes.NameIdentifier), out Guid userId);
