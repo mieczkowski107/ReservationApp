@@ -2,7 +2,7 @@
 using ReservationApp.Data.Repository.IRepository;
 using ReservationApp.Utility.Enums;
 
-namespace ReservationApp.Services;
+namespace ReservationApp.Services.BackgroundServices;
 
 public class AppointmentStatusService(IServiceProvider serviceProvider) : BackgroundService
 {
