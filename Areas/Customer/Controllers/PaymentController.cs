@@ -81,12 +81,8 @@ public class PaymentController : Controller
         return new StatusCodeResult(303);
     }
 
-    public IActionResult AppointmentRefund(int? appointmentId)
+    public IActionResult AppointmentRefund(int appointmentId)
     {
-        if (!appointmentId.HasValue)
-        {
-            return NotFound();
-        }
 
         var appointment = _unitOfWork.Appointments.Get(
             u => u.Id == appointmentId,
@@ -96,19 +92,24 @@ public class PaymentController : Controller
         {
             return NotFound();
         }
+        var payment = _unitOfWork.Payment.Get(u => u.AppointmentId == appointmentId);
+        if(payment == null)
+        {
+            return NotFound();
+        }
 
         var userId = UserService.GetUserId(User);
         bool isAuthorized = UserService.IsAdmin(User) || appointment.Service!.Company!.OwnerId == userId;
 
-        if (!isAuthorized)
+        if (!isAuthorized || payment.Status != PaymentStatus.Succeeded)
         {
             return Forbid();
         }
-
-        var result = _paymentService.RefundAppointment(appointmentId.Value);
+        
+        var result = _paymentService.RefundAppointment(appointmentId);
         TempData[result.Success ? "success" : "error"] = result.Message;
 
-        return RedirectToAction("Details", "Appointment", new { id = appointmentId });
+        return RedirectToAction("Details", "Appointment", new {Area = "Admin" ,id = appointmentId });
     }
    
 
