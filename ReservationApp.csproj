@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 	<PropertyGroup> 
 		<ResolveStaticWebAssetsInputsDependsOn>RemoveIdentityAssets</ResolveStaticWebAssetsInputsDependsOn>
+		<UserSecretsId>d0f6650d-24d7-4129-abb5-70932be78550</UserSecretsId>
 	</PropertyGroup>
 
 	<Target Name="RemoveIdentityAssets">
