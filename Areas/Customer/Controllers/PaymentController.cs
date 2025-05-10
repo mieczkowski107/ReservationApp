@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using ReservationApp.Data.Repository.IRepository;
 using ReservationApp.Models;
+using ReservationApp.Services;
+using ReservationApp.Services.Interfaces;
 using ReservationApp.Utility.Enums;
 using Stripe;
 using Stripe.Checkout;
@@ -15,10 +17,12 @@ namespace ReservationApp.Areas.Customer.Controllers;
 public class PaymentController : Controller
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IPaymentService _paymentService;
 
-    public PaymentController(IUnitOfWork unitOfWork)
+    public PaymentController(IUnitOfWork unitOfWork ,IPaymentService paymentService)
     {
         _unitOfWork = unitOfWork;
+        _paymentService = paymentService;
     }
 
     public IActionResult Index()
@@ -77,11 +81,36 @@ public class PaymentController : Controller
         return new StatusCodeResult(303);
     }
 
-    //TODO: Implement the AppointmentRefund method
     public IActionResult AppointmentRefund(int? appointmentId)
     {
-        return View();
+        if (!appointmentId.HasValue)
+        {
+            return NotFound();
+        }
+
+        var appointment = _unitOfWork.Appointments.Get(
+            u => u.Id == appointmentId,
+            includeProperties: "Service.Company,User"
+        );
+        if (appointment == null)
+        {
+            return NotFound();
+        }
+
+        var userId = UserService.GetUserId(User);
+        bool isAuthorized = UserService.IsAdmin(User) || appointment.Service!.Company!.OwnerId == userId;
+
+        if (!isAuthorized)
+        {
+            return Forbid();
+        }
+
+        var result = _paymentService.RefundAppointment(appointmentId.Value);
+        TempData[result.Success ? "success" : "error"] = result.Message;
+
+        return RedirectToAction("Details", "Appointment", new { id = appointmentId });
     }
+   
 
 }
 
