@@ -38,22 +38,21 @@ public class CompanyController(IUnitOfWork _unitOfWork, IWebHostEnvironment _hos
     {
         if (!UserService.IsAdmin(User))
         {
-            var userId = UserService.GetUserId(User);
-            var userCompanies = _unitOfWork.Companies.GetAll(u => u.OwnerId == userId).Select(c => c.Id);
-            if (id.HasValue)
+            if (!UserService.IsAdmin(User))
             {
-                if (!userCompanies.Contains(id.Value))
+                var userId = UserService.GetUserId(User);
+                var userCompanies = _unitOfWork.Companies.GetAll(u => u.OwnerId == userId).Select(c => c.Id).ToHashSet();
+
+                if (id.HasValue && !userCompanies.Contains(id.Value))
+                {
+                    return Forbid();
+                }
+
+                if (!id.HasValue && userCompanies.Count >= 1)
                 {
                     return Forbid();
                 }
             }
-            else
-            {
-                //TODO: Add logic to check if user is owner of company and has access to Create or Edit
-                // Probably need to add field in User table to check if user can create company if id is null
-                // Or check if user is owner of company and has access to edit
-            }
-
         }
         var companyVm = new CompanyVM()
         {
@@ -81,15 +80,20 @@ public class CompanyController(IUnitOfWork _unitOfWork, IWebHostEnvironment _hos
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult Upsert(CompanyVM companyVm, IFormFile file)
+    public IActionResult Upsert(CompanyVM companyVm, IFormFile? file)
     {
+        var userId = UserService.GetUserId(User);
+        var userCompanies = _unitOfWork.Companies.Get(u => u.OwnerId == userId);
+        if (userCompanies != null && !UserService.IsAdmin(User))
+        {
+            return Forbid();
+        }
         if (ModelState.IsValid)
         {
             _imageService.ImageUpload(companyVm, file);
-         
             if (companyVm.Company.OwnerId == null)
             {
-                var userId = UserService.GetUserId(User);
+
                 companyVm.Company.OwnerId = userId;
                 _unitOfWork.Companies.Add(companyVm.Company!);
                 TempData["success"] = "Company added successfully!";
