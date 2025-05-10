@@ -3,4 +3,5 @@
 public interface IAppointmentCleanupService
 {
     void RemoveOutdatedPendingAppointments(int thresholdMinutes);
+    void ProcessPastAppointments();
 }
