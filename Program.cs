@@ -21,6 +21,7 @@ using Serilog.Ui.Core.Extensions;
 using Serilog.Ui.Web.Models;
 using Hangfire.Dashboard.BasicAuthorization;
 using ReservationApp.Services.Interfaces;
+using ReservationApp.Services.BackgroundServices;
 
 namespace ReservationApp
 {
