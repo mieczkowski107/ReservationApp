@@ -10,10 +10,11 @@ public class CompanyImageService(IWebHostEnvironment webHostEnvironment, IUnitOf
 {
     private readonly IWebHostEnvironment _webHostEnvironment = webHostEnvironment;
     private readonly IUnitOfWork _unitOfWork = unitOfWork;
-    public bool IsFileValid(IFormFile file)
+    public bool IsFileValid(IFormFile? file)
     {
+        if (file == null) return false;
 
-        if (file.Length < 0 || file.Length > (2 * 1024 * 1024) || file == null) // 2MB
+        if (file.Length < 0 || file.Length > (2 * 1024 * 1024)) // 2MB
         {
             return false;
         }
@@ -24,7 +25,7 @@ public class CompanyImageService(IWebHostEnvironment webHostEnvironment, IUnitOf
         return false;
     }
 
-    public bool ImageUpload(CompanyVM companyVm, IFormFile file)
+    public bool ImageUpload(CompanyVM companyVm, IFormFile? file)
     {
         if (!IsFileValid(file)) return false;
         string wwwRootPath = _webHostEnvironment.WebRootPath;
