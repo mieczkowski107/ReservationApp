@@ -6,6 +6,7 @@ using ReservationApp.Data.Repository.IRepository;
 using ReservationApp.Models;
 using ReservationApp.Models.ViewModels;
 using ReservationApp.Services;
+using ReservationApp.Services.Interfaces;
 using ReservationApp.Utility.Enums;
 using Stripe;
 using Stripe.Checkout;
@@ -17,7 +18,7 @@ namespace ReservationApp.Areas.Customer.Controllers;
 
 [Area("Customer")]
 [Authorize]
-public class AppointmentController(IUnitOfWork unitOfWork, NotificationService notificationService)
+public class AppointmentController(IUnitOfWork unitOfWork, INotificationService notificationService, IPaymentService paymentService)
     : Controller
 {
     private AppointmentVM? AppointmentVm { get; set; }
@@ -40,75 +41,17 @@ public class AppointmentController(IUnitOfWork unitOfWork, NotificationService n
         return View();
     }
 
-    [HttpPost]
-    public IActionResult ConfirmChoice(AppointmentVM appointmentVm)
-    {
-        if (!ModelState.IsValid)
-        {
-            return RedirectToAction("Index", appointmentVm);
-        }
-
-        if (!appointmentVm.IsValid())
-        {
-            TempData["error"] = "Invalid date or time. Please try again.";
-            return RedirectToAction("Index", appointmentVm);
-        }
-
-        var availableHours = new Dictionary<DateOnly, List<TimeOnly>>();
-
-        #region JsonDeserialize
-        var json = GetDateAndHours(appointmentVm.ServiceId).ToJson();
-        var jsonNode = JsonNode.Parse(json);
-        var valueNode = jsonNode?["Value"];
-
-        if (valueNode != null)
-        {
-            var tempDict = JsonSerializer.Deserialize<Dictionary<string, List<string>>>(valueNode.ToJsonString());
-
-            if (tempDict != null)
-            {
-                availableHours = tempDict.ToDictionary(
-                    kvp => DateOnly.Parse(kvp.Key),
-                    kvp => kvp.Value.Select(TimeOnly.Parse).ToList()
-                );
-            }
-        }
-        #endregion
-
-        if (!availableHours[appointmentVm.SelectedDate].Contains(appointmentVm.SelectedTime))
-        {
-            TempData["error"] = "The selected time is not available. Please choose another one.";
-            return RedirectToAction(nameof(Index), new { appointmentVm.ServiceId });
-        }
-
-        var appointment = new Appointment
-        {
-            Date = appointmentVm.SelectedDate,
-            Time = appointmentVm.SelectedTime,
-            ServiceId = appointmentVm.ServiceId,
-            UserId = User.FindFirstValue(ClaimTypes.NameIdentifier)
-        };
-        unitOfWork.Appointments.Add(appointment);
-        unitOfWork.Save();
-        
-        notificationService.CreateNotification(NotificationType.Confirmation, appointment.Id);
-        BackgroundJob.Enqueue(() => notificationService.SendNotification(appointment.Id));
-
-        var jobId = BackgroundJob.Schedule(() => notificationService.CreateNotification(NotificationType.Reminder,appointment.Id), new DateTime(appointment.Date, appointment.Time).AddHours(-24));
-        BackgroundJob.ContinueJobWith(jobId, () => notificationService.SendNotification(appointment.Id));
-
-        return RedirectToAction(nameof(Confirmation), new { appointment.Id });
-    }
-
     public IActionResult Confirmation(int id)
     {
-        string userId = User.FindFirstValue(claimType: ClaimTypes.NameIdentifier)!;
-        var appointment = unitOfWork.Appointments.Get(u => u.Id == id && u.UserId == userId, includeProperties: "Service.Company", tracked: true);
-        if (appointment == null)
+        var userId = UserService.GetUserId(User).ToString();
+        var appointment = unitOfWork.Appointments.Get(u => u.Id == id && u.UserId == userId,
+                                                      includeProperties: "Service.Company",
+                                                      tracked: true);
+        if (appointment == null || appointment.Service != null)
         {
             return NotFound();
         }
-        if (appointment.Service.IsPrepaymentRequired)
+        if (appointment!.Service!.IsPrepaymentRequired)
         {
             var payment = unitOfWork.Payment.Get(u => u.AppointmentId == id);
             if (payment is null)
@@ -126,48 +69,84 @@ public class AppointmentController(IUnitOfWork unitOfWork, NotificationService n
         return View(appointment);
     }
 
+    [HttpPost]
+    public IActionResult ConfirmChoice(AppointmentVM appointmentVm)
+    {
+        if (!ModelState.IsValid || !appointmentVm.IsValid())
+        {
+            TempData["error"] = "Invalid date or time. Please try again.";
+            return RedirectToAction("Index", appointmentVm);
+        }
+
+        var availableHours = GetAvailableHours(appointmentVm.ServiceId);
+
+        if (!availableHours[appointmentVm.SelectedDate].Contains(appointmentVm.SelectedTime))
+        {
+            TempData["error"] = "The selected time is not available. Please choose another one.";
+            return RedirectToAction(nameof(Index), new { appointmentVm.ServiceId });
+        }
+
+        var appointment = new Appointment
+        {
+            Date = appointmentVm.SelectedDate,
+            Time = appointmentVm.SelectedTime,
+            ServiceId = appointmentVm.ServiceId,
+            UserId = UserService.GetUserId(User).ToString()
+        };
+        unitOfWork.Appointments.Add(appointment);
+        unitOfWork.Save();
+
+        notificationService.CreateNotification(NotificationType.Confirmation, appointment.Id);
+
+        //BackgroundJob.Enqueue(() => notificationService.SendNotification(appointment.Id));
+        //var jobId = BackgroundJob.Schedule(() => notificationService.CreateNotification(NotificationType.Reminder,appointment.Id), new DateTime(appointment.Date, appointment.Time).AddHours(-24));
+        //BackgroundJob.ContinueJobWith(jobId, () => notificationService.SendNotification(appointment.Id));
+
+        return RedirectToAction(nameof(Confirmation), new { appointment.Id });
+    }
 
     public IActionResult Details(int id)
     {
-        string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var appointment = unitOfWork.Appointments.Get(u => u.Id == id && u.UserId == userId, includeProperties: "Service.Company", tracked: true);
+        var userId = UserService.GetUserId(User).ToString();
+        var appointment = unitOfWork.Appointments.Get(u => u.Id == id && u.UserId == userId,
+                                                      includeProperties: "Service.Company",
+                                                      tracked: true);
         if (appointment is null)
         {
             return NotFound();
         }
-        if (appointment.Status == AppointmentStatus.Pending && !appointment.Service.IsPrepaymentRequired)
+        if (appointment.Status == AppointmentStatus.Pending && !appointment.Service!.IsPrepaymentRequired)
         {
             TempData["success"] = "Your appointment has been confirmed!";
             appointment.Status = AppointmentStatus.Confirmed;
         }
         if (appointment.Status == AppointmentStatus.Pending && appointment.Service.IsPrepaymentRequired)
         {
-            //TODO: Need to extract logic to a separate method and call it here
             var payment = unitOfWork.Payment.Get(u => u.AppointmentId == appointment.Id);
-            var service = new SessionService();
-            Session session = service.Get(payment.SessionId);
-            if (session.PaymentStatus.ToLower() == "paid")
+            if(payment == null)
+            {
+                return NotFound();
+            }
+            if (paymentService.IsPaid(payment, out Session session))
             {
                 TempData["success"] = "Your appointment has been confirmed!";
                 unitOfWork.Payment.UpdateStripePaymentID(appointment.Id, session.Id, session.PaymentIntentId);
                 unitOfWork.Payment.UpdateStatus(appointment.Id, AppointmentStatus.Confirmed, PaymentStatus.Succeeded);
             }
         }
-        ViewBag.IsReviewed = unitOfWork.Review.Get(u => u.AppointmentId == id) != null ? true : false;
-        unitOfWork.Appointments.Update(appointment);
+        ViewBag.IsReviewed = unitOfWork.Review.Get(u => u.AppointmentId == id) != null;
         unitOfWork.Save();
 
         return View(appointment);
     }
     public IActionResult Cancel(int id)
     {
-        string userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var userId = UserService.GetUserId(User).ToString();
         var appointment = unitOfWork.Appointments.Get(u => u.Id == id && u.UserId == userId, includeProperties: "Service", tracked: true);
         if (appointment is null)
         {
             return NotFound();
         }
-
 
         if (!appointment.IsCancelationAvailable())
         {
@@ -175,25 +154,16 @@ public class AppointmentController(IUnitOfWork unitOfWork, NotificationService n
             return RedirectToAction(nameof(UserAppointments));
         }
 
-        if (appointment.Service.IsPrepaymentRequired)
+        if (appointment.Service!.IsPrepaymentRequired)
         {
             var payment = unitOfWork.Payment.Get(u => u.AppointmentId == id);
             if(payment is null)
             {
                 return NotFound();
             }
-            //TODO: Need to extract refund logic to a separate method and call it here
             if (payment.Status == PaymentStatus.Succeeded)
             {
-                var options = new RefundCreateOptions
-                {
-                    Reason = RefundReasons.RequestedByCustomer,
-                    PaymentIntent = payment.PaymentIntentId,
-                };
-                var service = new RefundService();
-                service.Create(options);
-                unitOfWork.Payment.UpdateStatus(id, AppointmentStatus.Cancelled, PaymentStatus.Refunded);
-                TempData["success"] = "Your appointment has been cancelled and money will be refunded in next few days.";
+                return RedirectToAction("AppointmentRefund", "Payment", new { Area = "Customer", appointmentId = id });
             }
         }
         else
@@ -202,7 +172,6 @@ public class AppointmentController(IUnitOfWork unitOfWork, NotificationService n
             TempData["success"] = "Your appointment has been cancelled.";
         }
         notificationService.CreateNotification(NotificationType.Cancellation, appointment.Id);
-        BackgroundJob.Enqueue(() => notificationService.SendNotification(appointment.Id));
         unitOfWork.Appointments.Update(appointment);
         unitOfWork.Save();
         return RedirectToAction(nameof(UserAppointments));
@@ -219,19 +188,44 @@ public class AppointmentController(IUnitOfWork unitOfWork, NotificationService n
             return NotFound();
         }
 
-        Dictionary<DateOnly, List<TimeOnly>> availableDatesAndHours = [];
+        var availableDatesAndHours = GetAvailableHours(ServiceId.Value);
+        return Json(availableDatesAndHours);
+    }
+
+    [HttpGet]
+    public IActionResult GetUserAppointments()
+    {
+        if (UserService.IsCustomer(User)) 
+        {
+            var userId = UserService.GetUserId(User).ToString();
+            var appointments = unitOfWork.Appointments.GetAll(u => u.UserId == userId && u.Status != AppointmentStatus.Cancelled, includeProperties: "Service.Company").ToList();
+            return Json(new { data = appointments });
+        }
+        else
+        {
+            return Json(new { });
+        }
+    }
+
+    #endregion
+
+    private Dictionary<DateOnly, List<TimeOnly>> GetAvailableHours(int ServiceId)
+    {
+        var availableDatesAndHours = new Dictionary<DateOnly, List<TimeOnly>>();
 
         var service = unitOfWork.Services.Get(u => u.Id == ServiceId, includeProperties: nameof(Company));
-        if (service == null) { return NotFound(); }
-
+        if (service == null) 
+        {
+            return availableDatesAndHours;
+        }
 
         // Ustalenie pierwszej i ostatniej daty, które można wybrać
-        DateOnly firstDate = DateOnly.FromDateTime(DateTime.Now.AddDays(2)); // Nie można wybrać dzisiejszej daty
-        DateOnly lastDate = DateOnly.FromDateTime(DateTime.Now.AddDays(30)); // Nie można wybrać daty późniejszej niż 30 dni od dzisiejszej daty
+        var firstDate = DateOnly.FromDateTime(DateTime.Now.AddDays(2)); // Nie można wybrać dzisiejszej daty
+        var lastDate = DateOnly.FromDateTime(DateTime.Now.AddDays(30)); // Nie można wybrać daty późniejszej niż 30 dni od dzisiejszej daty
 
         // Ustalenie godzin pracy firmy
-        TimeOnly startTime = new(8, 0, 0); // In the future, this should be fetched from the database based on the company working hours 
-        TimeOnly endTime = new(16, 0, 0); // In the future, this should be fetched from the database based on the company working hours
+        var startTime = new TimeOnly(8, 0, 0); // In the future, this should be fetched from the database based on the company working hours 
+        var endTime = new TimeOnly(16, 0, 0); // In the future, this should be fetched from the database based on the company working hours
 
 
         for (var i = firstDate; i <= lastDate; i = i.AddDays(1))
@@ -241,7 +235,7 @@ public class AppointmentController(IUnitOfWork unitOfWork, NotificationService n
                 continue;
             }
 
-            List<TimeOnly> availableHours = [];
+            var availableHours = new List<TimeOnly>();
             var appointments = unitOfWork.Appointments.GetAll(u => u.Date == i && u.Service.CompanyId == service.CompanyId, includeProperties: "Service");
 
             //Wszystkie możliwe godziny w danym dniu
@@ -249,7 +243,7 @@ public class AppointmentController(IUnitOfWork unitOfWork, NotificationService n
             {
                 availableHours.Add(j);
             }
-            List<TimeOnly> busyHours = new(availableHours);
+            var busyHours = new List<TimeOnly>(availableHours);
             // Usunięcie godzin, które są zajęte w danym dniu
             // oraz wyeleminowanie godzin, które nie są 
             // dostępne z powodu trwania usługi
@@ -259,7 +253,7 @@ public class AppointmentController(IUnitOfWork unitOfWork, NotificationService n
                 {
                     continue;
                 }
-                var duration = appointment.Service.DurationMinutes.TotalMinutes;
+                var duration = appointment.Service!.DurationMinutes.TotalMinutes;
                 var maxTime = appointment.Time.AddMinutes(duration);
                 availableHours.RemoveAll(hour =>
                                             appointment.Time <= hour
@@ -280,34 +274,15 @@ public class AppointmentController(IUnitOfWork unitOfWork, NotificationService n
                     if (busyHours.Contains(available.AddMinutes(15)))
                     {
                         availableHours.RemoveAt(m);
-                        m--; // Decrement the index since we've removed an item
+                        m--; 
                         break;
                     }
                 }
             }
-
             availableDatesAndHours.Add(i, availableHours);
         }
-        return Json(availableDatesAndHours);
+        return availableDatesAndHours;
     }
-
-    [HttpGet]
-    public IActionResult GetUserAppointments()
-    {
-        if (User.IsInRole(Role.Customer.ToString())) //TODO: DO POPRAWY ten if
-        {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var appointments = unitOfWork.Appointments.GetAll(u => u.UserId == userId && u.Status != AppointmentStatus.Cancelled, includeProperties: "Service.Company").ToList();
-            return Json(new { data = appointments });
-        }
-        else
-        {
-            return Json(new { });
-        }
-    }
-
-    #endregion
-
 }
 
 
