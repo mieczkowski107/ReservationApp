@@ -95,6 +95,7 @@ namespace ReservationApp
             builder.Services.AddScoped<IServiceProvider, ServiceProvider>();
             builder.Services.AddScoped<IReportService, ReportService>();
             builder.Services.AddScoped<IImageService, CompanyImageService>();
+            builder.Services.AddScoped<IPaymentService, PaymentService>();
             #endregion
 
             #region Stripe
