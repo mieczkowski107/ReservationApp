@@ -12,16 +12,11 @@ namespace ReservationApp.Areas.Admin.Controllers;
 [Authorize(Roles = "Admin,CompanyManager")]
 public class ServiceController(IUnitOfWork _unitOfWork) : Controller
 {
-    public IActionResult Index(int? id)
+    public IActionResult Index(int id)
     {
-        if (!id.HasValue)
-        {
-            return NotFound();
-        }
-        Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid userId);
-        List<Service> services;
-        services = _unitOfWork.Services.GetAll(u => u.CompanyId == (int)id && (u.Company!.OwnerId == userId || UserService.IsAdmin(User)), includeProperties: nameof(Company)).ToList();
-
+        var userId = UserService.GetUserId(User);
+        var isAdmin = UserService.IsAdmin(User);
+        var services = _unitOfWork.Services.GetAll(u => u.CompanyId == (int)id && (u.Company!.OwnerId == userId || isAdmin), includeProperties: nameof(Company)).ToList();
         var company = _unitOfWork.Companies.Get(u => u.Id == id && (u.OwnerId == userId || UserService.IsAdmin(User)));
 
         if (company == null)
@@ -50,7 +45,7 @@ public class ServiceController(IUnitOfWork _unitOfWork) : Controller
         }
         if (!UserService.IsAdmin(User))
         {
-            Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid userId);
+            var userId = UserService.GetUserId(User);
             if (userCompany.OwnerId != userId)
             {
                 return Forbid();
@@ -74,24 +69,20 @@ public class ServiceController(IUnitOfWork _unitOfWork) : Controller
 
         }
         var serviceObj = _unitOfWork.Services.Get(u => u.Id == serviceId, includeProperties: nameof(Company), tracked: false);
-        if(serviceObj == null)
+        if (serviceObj == null)
         {
             return NotFound();
         }
 
-        if (!UserService.IsAdmin(User))
+        if (!IsAuthorized(serviceObj, User))
         {
-            Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid userId);
-            if (serviceObj.Company?.OwnerId != userId)
-            {
-                return Forbid();
-            }
+            return Forbid();
         }
-     
+
         return View("Upsert", serviceObj);
     }
 
-   
+
 
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -99,11 +90,11 @@ public class ServiceController(IUnitOfWork _unitOfWork) : Controller
     {
         if (ModelState.IsValid)
         {
-            Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid userId);
+            var userId = UserService.GetUserId(User);
             var services = _unitOfWork.Services.GetAll(u => u.CompanyId == service.CompanyId, includeProperties: nameof(Company), tracked: false).ToList();
             if (!UserService.IsAdmin(User))
             {
-                if(services.Any())
+                if (services.Any())
                 {
                     if (services.First().Company?.OwnerId != userId)
                     {
@@ -136,18 +127,15 @@ public class ServiceController(IUnitOfWork _unitOfWork) : Controller
             return NotFound();
         }
         var serviceObj = _unitOfWork.Services.Get(u => u.Id == id, includeProperties: nameof(Company));
-        if(serviceObj == null) 
+        if (serviceObj == null)
         {
             return NotFound();
         }
-        if (!UserService.IsAdmin(User))
+        if (!IsAuthorized(serviceObj, User))
         {
-            Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid userId);
-            if (serviceObj.Company?.OwnerId != userId)
-            {
-                return Forbid();
-            }
+            return Forbid();
         }
+
         return View(serviceObj);
     }
 
@@ -165,21 +153,21 @@ public class ServiceController(IUnitOfWork _unitOfWork) : Controller
         {
             return NotFound();
         }
-        if (!UserService.IsAdmin(User))
+        if(!IsAuthorized(serviceObj, User))
         {
-            Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid userId);
-            if (serviceObj.Company?.OwnerId != userId)
-            {
-                return Forbid();
-            }
+            return Forbid();
         }
-
+      
         _unitOfWork.Services.Remove(serviceObj);
         _unitOfWork.Save();
         TempData["success"] = "Service deleted succesffuly!";
         return RedirectToAction(nameof(Index), new { Id = serviceObj.CompanyId });
     }
 
-
+    private bool IsAuthorized(Service service, ClaimsPrincipal user)
+    {
+        var isAdmin = UserService.IsAdmin(user);
+        return isAdmin || (service.Company!.OwnerId == UserService.GetUserId(user));
+    }
 }
 
