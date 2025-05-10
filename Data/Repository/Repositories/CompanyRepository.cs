@@ -11,11 +11,5 @@ namespace ReservationApp.Data.Repository.Repositories
             _db = db;
         }
 
-        public Dictionary<string, List<Company>> GetCompaniesByCategory()
-        {
-            return _db.Companies
-                .GroupBy(c => c.Category.Name)
-                .ToDictionary(g => g.Key, g => g.ToList());
-        }
     }
 }
