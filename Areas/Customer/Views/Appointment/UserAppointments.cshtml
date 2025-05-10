@@ -48,14 +48,11 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", function () {
-            // Select all buttons with the 'status-btn' class
             let statusButtons = document.querySelectorAll('.status-btn');
 
-            // Loop through each button and update its class based on the data-status
             statusButtons.forEach(function (btn) {
                 let status = btn.getAttribute('data-status');
 
-                // Update the button class based on the status
                 if (status === 'Pending') {
                     btn.classList.add('btn-outline-warning');
                 } else if (status === 'Paid') {
