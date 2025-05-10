@@ -5,6 +5,7 @@ using ReservationApp.Data.Repository.IRepository;
 using ReservationApp.Models;
 using ReservationApp.Models.ViewModels;
 using ReservationApp.Services;
+using ReservationApp.Services.Interfaces;
 using ReservationApp.Utility.Enums;
 using Stripe;
 using System.Security.Claims;
@@ -13,7 +14,7 @@ namespace ReservationApp.Areas.Admin.Controllers;
 
 [Area("Admin")]
 [Authorize(Roles = "CompanyManager,Admin")]
-public class AppointmentController(IUnitOfWork unitOfWork) : Controller
+public class AppointmentController(IUnitOfWork unitOfWork, INotificationService notificationService) : Controller
 {
     public IActionResult Index()
     {
@@ -134,7 +135,7 @@ public class AppointmentController(IUnitOfWork unitOfWork) : Controller
             {
                 return NotFound();
             }
-            //TODO: Need to extract refund logic to a separate method and call it here
+          
             if (payment.Status == PaymentStatus.Succeeded)
             {
                 return RedirectToAction("AppointmentRefund", "Payment", new {Area = "Customer",appointmentId = id });
@@ -147,6 +148,7 @@ public class AppointmentController(IUnitOfWork unitOfWork) : Controller
         }
 
         // TODO: Send email to user about the cancellation
+        notificationService.CreateNotification(NotificationType.Cancellation, id);
 
         unitOfWork.Save();
         return RedirectToAction(nameof(Details), new { id });
