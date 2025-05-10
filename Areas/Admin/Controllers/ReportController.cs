@@ -14,15 +14,13 @@ namespace ReservationApp.Areas.Admin.Controllers;
 [Authorize(Roles = "CompanyManager,Admin")]
 public class ReportController(IUnitOfWork unitOfWork, IReportService reportService) : Controller
 {
-    private readonly IUnitOfWork _unitOfWork = unitOfWork;
-    private readonly IReportService _reportService = reportService;
     private const string ReportExtension = ".csv";
     public IActionResult Index()
     {
-        Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid userId);
+        var userId = UserService.GetUserId(User);
         var reportFormVm = new ReportFormVM
         {
-            CompanyList = _unitOfWork.Companies.GetAll( u => UserService.IsAdmin(User)
+            CompanyList = unitOfWork.Companies.GetAll( u => UserService.IsAdmin(User)
                                                              || u.OwnerId == userId).Select(i => new SelectListItem
             {
                 Text = i.Name,
@@ -36,15 +34,15 @@ public class ReportController(IUnitOfWork unitOfWork, IReportService reportServi
     [HttpPost]
     public IActionResult Result(ReportFormVM reportFormVm)
     {
-        Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid userId);
-        var report = _unitOfWork.Report.Get(p => (UserService.IsAdmin(User) || p.Company!.OwnerId == userId)
+        var userId = UserService.GetUserId(User);
+        var report = unitOfWork.Report.Get(p => (UserService.IsAdmin(User) || p.Company!.OwnerId == userId)
                                                  && p.CompanyId == reportFormVm.CompanyId
                                                  && p.StartRangeDate == reportFormVm.StartRangeDate && p.EndRangeDate == reportFormVm.EndRangeDate);
         if (report == null)
         {
-            report = _reportService.GetReport(reportFormVm.CompanyId, reportFormVm.StartRangeDate, reportFormVm.EndRangeDate);
-            _unitOfWork.Report.Add(report);
-            _unitOfWork.Save();
+            report = reportService.GetReport(reportFormVm.CompanyId, reportFormVm.StartRangeDate, reportFormVm.EndRangeDate);
+            unitOfWork.Report.Add(report);
+            unitOfWork.Save();
         }
         var reportVm = new ReportVm(report);
         return View(reportVm);
@@ -52,8 +50,8 @@ public class ReportController(IUnitOfWork unitOfWork, IReportService reportServi
     [HttpGet]
     public IActionResult DownloadReport(int reportId)
     {
-        Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid userId);
-        var report = _unitOfWork.Report.Get(p => p.Id == reportId && (UserService.IsAdmin(User) || p.Company!.OwnerId == userId),
+        var userId = UserService.GetUserId(User);
+        var report = unitOfWork.Report.Get(p => p.Id == reportId && (UserService.IsAdmin(User) || p.Company!.OwnerId == userId),
                                             includeProperties: nameof(Company),
                                             tracked: true);
         if(report == null)
@@ -61,15 +59,15 @@ public class ReportController(IUnitOfWork unitOfWork, IReportService reportServi
             return NotFound();
         }
 
-        string fileName = $"{report.StartRangeDate}_{report.EndRangeDate}" + Path.GetExtension(ReportExtension);
+        var fileName = $"{report.StartRangeDate}_{report.EndRangeDate}" + Path.GetExtension(ReportExtension);
         
         if (!System.IO.File.Exists(report.ReportUrl))
         {
             var reportVm = new ReportVm(report);
-            string path = _reportService.GetReportPath(report.CompanyId) + @"\" + fileName;
-            _reportService.WriteReportToCSV(reportVm, path);
+            var path = reportService.GetReportPath(report.CompanyId) + @"\" + fileName;
+            reportService.WriteReportToCSV(reportVm, path);
             report.ReportUrl = path;
-            _unitOfWork.Save();
+            unitOfWork.Save();
         }
         return File(System.IO.File.ReadAllBytes(report.ReportUrl!), "text/csv",fileName);
     }
