@@ -1,13 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ReservationApp.Data.Repository.IRepository;
-using ReservationApp.Models;
 using ReservationApp.Services;
 using ReservationApp.Services.Interfaces;
 using ReservationApp.Utility.Enums;
-using Stripe;
 using Stripe.Checkout;
-using System.Security.Claims;
 
 namespace ReservationApp.Areas.Customer.Controllers;
 
@@ -41,40 +38,15 @@ public class PaymentController : Controller
         {
             return NotFound();
         }
-        if (User.IsInRole(Role.Customer.ToString()))
+        if (UserService.IsCustomer(User))
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userId = UserService.GetUserId(User).ToString();
             if (appointment.UserId != userId)
             {
                 return Forbid();
             }
         }
-        var domain = "https://localhost:7038/";
-
-        var options = new SessionCreateOptions
-        {
-            SuccessUrl = domain + "Customer/Appointment/Details?id=" + appointmentId,
-            CancelUrl = domain + "Customer/Appointment/Confirmation/" + appointmentId,
-            Mode = "payment",
-            LineItems = new List<SessionLineItemOptions>()
-        };
-        var sessionLineItem = new SessionLineItemOptions
-        {
-            PriceData = new SessionLineItemPriceDataOptions
-            {
-                Currency = "usd",
-                UnitAmount = (long)(appointment.Service.Price * 100),
-                ProductData = new SessionLineItemPriceDataProductDataOptions
-                {
-                    Name = appointment.Service.Name,
-                },
-            },
-            Quantity = 1,
-        };
-        options.LineItems.Add(sessionLineItem);
-
-        var service = new SessionService();
-        var session = service.Create(options);
+        var session = _paymentService.CreateAppointmentSession(appointment);
         _unitOfWork.Payment.UpdateStripePaymentID(appointmentId.Value, session.Id, session.PaymentIntentId);
         _unitOfWork.Save();
         Response.Headers.Append("Location", session.Url);
