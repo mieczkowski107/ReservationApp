@@ -12,16 +12,19 @@ public class HomeController(ILogger<HomeController> logger, IUnitOfWork unitOfWo
     private readonly ILogger<HomeController> _logger = logger;
     public IActionResult Index()
     {
-        var companies = unitOfWork.Companies.GetAll(includeProperties: nameof(Category)).ToList();
+        var companies = unitOfWork.Companies.GetAll().ToList();
         var categories = unitOfWork.Categories.GetAll().ToList();
-        var companiesCategories = new CompaniesCategoriesVM
-        {
-            Companies = companies,
-            Categories = categories
-        };
-        return View(companiesCategories);
-    }
 
+        var categoryCompanyPair = new CompaniesCategoriesVM
+        {
+            CategoryCompanyPair = categories.ToDictionary(
+                category => category,
+                category => companies.Where(c => c.CategoryId == category.Id).ToList()
+            )
+        };
+
+        return View(categoryCompanyPair);
+    }
 
     public IActionResult Details(int companyId)
     {
@@ -52,4 +55,5 @@ public class HomeController(ILogger<HomeController> logger, IUnitOfWork unitOfWo
     {
         return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
     }
+
 }

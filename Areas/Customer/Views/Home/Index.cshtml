@@ -2,13 +2,13 @@
 @model CompaniesCategoriesVM
 
 <div class="row pb-3">
-    @foreach (var item in Model.Categories)
+    @foreach (var item in Model.CategoryCompanyPair!)
     {
-        @if (Model.Companies.Where(u=>u.CategoryId == item.Id).Count()== 0) continue;
+        @if (item.Value.Count() == 0) continue;
         <h3 class="border-bottom border-primary pt-2">  
-            @item.Name
+            @item.Key.Name
         </h3>
-        @foreach (var company in Model.Companies.Where(x => x.CategoryId == item.Id))
+        @foreach (var company in item.Value)
         {
             <div class="col-lg-3 col-sm-6">
                 <div class="row p-2">
