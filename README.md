@@ -58,5 +58,5 @@ ReservationApp to aplikacja webowa umożliwiająca rezerwację usług online. Pr
    dotnet run
    ```
    > Upewnij się, że masz zainstalowane .NET 6 SDK oraz poprawnie skonfigurowane połączenie do bazy danych w pliku appsettings.json.
-   Aplikacja będzie dostępna pod adresem: https://localhost:5001/
+   Aplikacja będzie dostępna pod adresem: https://localhost:7038/
 
