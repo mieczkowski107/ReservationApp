@@ -14,20 +14,21 @@ namespace ReservationApp.Areas.Admin.Controllers;
 
 [Area("Admin")]
 [Authorize(Roles = "Admin,CompanyManager")]
-public class CompanyController(IUnitOfWork _unitOfWork, IWebHostEnvironment _hostEnvironment, IImageService _imageService)
+public class CompanyController(IUnitOfWork _unitOfWork, IImageService _imageService)
     : Controller
 {
 
     public IActionResult Index()
     {
+        var isAdmin = UserService.IsAdmin(User);
+        var userId = UserService.GetUserId(User);
         var companies = _unitOfWork.Companies.GetAll(includeProperties: nameof(Category)).ToList();
-        if (!UserService.IsAdmin(User) && !companies.Any(u => u.OwnerId == UserService.GetUserId(User)))
+        if (!isAdmin && !companies.Any(u => u.OwnerId == userId))
         {
             return NotFound();
         }
         if (UserService.IsCompanyManager(User))
         {
-            var userId = UserService.GetUserId(User);
             companies = _unitOfWork.Companies.GetAll(u => u.OwnerId == userId, includeProperties: "Category").ToList();
         }
 
