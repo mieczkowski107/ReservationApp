@@ -6,26 +6,18 @@ using ReservationApp.Services.Interfaces;
 using ReservationApp.Utility.Enums;
 
 namespace ReservationApp.Services;
-public class NotificationService : INotificationService
+public class NotificationService(IUnitOfWork unitOfWork, IEmailSender emailSender) : INotificationService
 {
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly IEmailSender _emailSender;
-    public NotificationService(IUnitOfWork unitOfWork, IEmailSender emailSender)
-    {
-        _unitOfWork = unitOfWork;
-        _emailSender = emailSender;
-    }
-
     public void CreateNotification(NotificationType type, int appointmentId)
     {
         var appointment = GetAppointmentDetails(appointmentId);
         if (appointment.Status != AppointmentStatus.Cancelled)
         {
-            var details = PrepareNotification(type, appointment);
+            var (title, message) = PrepareNotification(type, appointment);
             var notification = new Notification
             {
-                Title = details.title,
-                Message = details.message,
+                Title = title,
+                Message = message,
                 AppointmentId = appointmentId,
                 Type = type,
                 Status = NotificationStatus.Created,
@@ -36,24 +28,20 @@ public class NotificationService : INotificationService
     }
     public async Task SendNotification(int appointmentId)
     {
-        var notification = _unitOfWork.Notification.Get(n => n.AppointmentId == appointmentId && n.Status != NotificationStatus.Sent, tracked: true);
+        var notification = unitOfWork.Notification.Get(n => n.AppointmentId == appointmentId && n.Status != NotificationStatus.Sent, tracked: true);
         if (notification != null)
         {
-            await _emailSender.SendEmailAsync(notification.userEmail, notification.Title!, notification.Message!);
+            await emailSender.SendEmailAsync(notification.userEmail, notification.Title!, notification.Message!);
             notification.Status = NotificationStatus.Sent;
-            _unitOfWork.Save();
+            unitOfWork.Save();
         }
     }
     private Appointment GetAppointmentDetails(int appointmentId)
     {
-        var appointment = _unitOfWork.Appointments.Get(a => a.Id == appointmentId, includeProperties: "Service.Company,User");
-        if (appointment == null)
-        {
-            throw new Exception("Appointment not found");
-        }
-        return appointment;
+        var appointment = unitOfWork.Appointments.Get(a => a.Id == appointmentId, includeProperties: "Service.Company,User");
+        return appointment == null ? throw new Exception("Appointment not found") : appointment;
     }
-    private (string title, string message) PrepareNotification(NotificationType type, Appointment appointment)
+    private static (string title, string message) PrepareNotification(NotificationType type, Appointment appointment)
     {
         string title = string.Empty;
         string message = string.Empty;
@@ -83,13 +71,10 @@ public class NotificationService : INotificationService
         return (title, message);
     }
 
-
-    
-
     private void SaveNotificationToDb(Notification notification)
     {
-        _unitOfWork.Notification.Add(notification);
-        _unitOfWork.Save();
+        unitOfWork.Notification.Add(notification);
+        unitOfWork.Save();
     }
 
 
