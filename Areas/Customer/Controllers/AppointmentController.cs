@@ -97,10 +97,10 @@ public class AppointmentController(IUnitOfWork unitOfWork, INotificationService 
         unitOfWork.Save();
 
         notificationService.CreateNotification(NotificationType.Confirmation, appointment.Id);
+        BackgroundJob.Enqueue(() => notificationService.SendNotification(appointment.Id));
 
-        //BackgroundJob.Enqueue(() => notificationService.SendNotification(appointment.Id));
-        //var jobId = BackgroundJob.Schedule(() => notificationService.CreateNotification(NotificationType.Reminder,appointment.Id), new DateTime(appointment.Date, appointment.Time).AddHours(-24));
-        //BackgroundJob.ContinueJobWith(jobId, () => notificationService.SendNotification(appointment.Id));
+        var jobId = BackgroundJob.Schedule(() => notificationService.CreateNotification(NotificationType.Reminder,appointment.Id), new DateTime(appointment.Date, appointment.Time).AddHours(-24));
+        BackgroundJob.ContinueJobWith(jobId, () => notificationService.SendNotification(appointment.Id));
 
         return RedirectToAction(nameof(Confirmation), new { appointment.Id });
     }
