@@ -10,6 +10,7 @@ public class CompanyImageService(IWebHostEnvironment webHostEnvironment, IUnitOf
 {
     private readonly IWebHostEnvironment _webHostEnvironment = webHostEnvironment;
     private readonly IUnitOfWork _unitOfWork = unitOfWork;
+    private const string DefualtImagePath = @"\images\company\Temporary.jpg";
     public bool IsFileValid(IFormFile? file)
     {
         if (file == null) return true;
@@ -45,7 +46,7 @@ public class CompanyImageService(IWebHostEnvironment webHostEnvironment, IUnitOf
         }
         else if (companyVm.Company!.ImageUrl == null || file == null)
         {
-            companyVm.Company.ImageUrl = @"\images\company\Temporary.jpg";
+            companyVm.Company.ImageUrl = DefualtImagePath;
         }
         return true;
     }
