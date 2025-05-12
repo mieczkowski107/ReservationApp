@@ -2,7 +2,7 @@
 
 ReservationApp to aplikacja webowa umożliwiająca rezerwację usług online. Projekt stworzony z myślą o łatwej obsłudze zarówno dla klientów, jak i usługodawców.
 
-## Główne funkcjonalności
+# Główne funkcjonalności
 
 - **Rejestracja i logowanie użytkownika**  
   Rejestracja konta oraz logowanie przy użyciu ASP.NET Identity Core z bezpiecznym przechowywaniem haseł.
@@ -14,10 +14,19 @@ ReservationApp to aplikacja webowa umożliwiająca rezerwację usług online. Pr
   Dodawanie usługodawców wraz z przypisaniem ich do kategorii. Usługodawcy mogą definiować dostępne usługi, ich ceny oraz opisy.
 
 - **Przeglądanie i rezerwacja usług**  
-  Użytkownicy mogą przeglądać listę dostępnych usług, wybierać dogodny dzień i godzinę. System automatycznie waliduje dostępność terminów, aby zapobiec podwójnym rezerwacjom.
+  Użytkownicy mogą przeglądać listę dostępnych usług, wybierać dogodny dzień i godzinę.  
+  System automatycznie waliduje dostępność terminów, aby zapobiec podwójnym rezerwacjom.
+
+- **Automatyzacja zarządzania rezerwacjami**  
+  - Właściciele firm mogą anulować rezerwacje lub oznaczyć je jako *No show*.  
+  - Rezerwacje niepotwierdzone przez użytkownika w ciągu 15 minut są automatycznie anulowane przez system.  
+  - Wizyty są automatycznie oznaczane jako zrealizowane po ich zakończeniu.
 
 - **Płatności online**  
   Integracja z systemem płatności Stripe.
+
+- **Automatyczne zwroty płatności**  
+  W przypadku anulowania wizyty (zgodnie z zasadami anulowania), aplikacja obsługuje automatyczny zwrot środków poprzez Stripe.
 
 - **Historia rezerwacji**  
   Każdy użytkownik może przeglądać swoją historię rezerwacji: zarówno nadchodzące, jak i już zrealizowane wizyty.
@@ -34,7 +43,8 @@ ReservationApp to aplikacja webowa umożliwiająca rezerwację usług online. Pr
 - **Rejestrowanie logów aplikacji**  
   Pełne logowanie działania aplikacji, obsługi błędów i ważnych operacji biznesowych przy pomocy Serilog.
 
----
+
+
 
 ## Tech Stack
 
