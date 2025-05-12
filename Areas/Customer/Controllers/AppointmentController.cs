@@ -47,7 +47,7 @@ public class AppointmentController(IUnitOfWork unitOfWork, INotificationService 
         var appointment = unitOfWork.Appointments.Get(u => u.Id == id && u.UserId == userId,
                                                       includeProperties: "Service.Company",
                                                       tracked: true);
-        if (appointment == null || appointment.Service != null)
+        if (appointment == null)
         {
             return NotFound();
         }
@@ -203,7 +203,7 @@ public class AppointmentController(IUnitOfWork unitOfWork, INotificationService 
         }
         else
         {
-            return Json(new { });
+            return Json(new { data = new List<Appointment>() });
         }
     }
 
