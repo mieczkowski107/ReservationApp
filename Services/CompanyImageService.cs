@@ -12,7 +12,7 @@ public class CompanyImageService(IWebHostEnvironment webHostEnvironment, IUnitOf
     private readonly IUnitOfWork _unitOfWork = unitOfWork;
     public bool IsFileValid(IFormFile? file)
     {
-        if (file == null) return false;
+        if (file == null) return true;
 
         if (file.Length < 0 || file.Length > (2 * 1024 * 1024)) // 2MB
         {
@@ -43,7 +43,7 @@ public class CompanyImageService(IWebHostEnvironment webHostEnvironment, IUnitOf
             }
             companyVm.Company!.ImageUrl = @"\images\company\" + fileName;
         }
-        else if (companyVm.Company!.ImageUrl == null)
+        else if (companyVm.Company!.ImageUrl == null || file == null)
         {
             companyVm.Company.ImageUrl = @"\images\company\Temporary.jpg";
         }
