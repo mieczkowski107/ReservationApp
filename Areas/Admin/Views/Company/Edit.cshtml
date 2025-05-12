@@ -5,7 +5,7 @@
     <div class="card-header bg-secondary bg-gradient ml-0 py-3">
         <div class="row">
             <div class="col-12 text-center">
-                <h2 class="py-2"> @(Model.Company.Id != 0 ? "Update" : "Create") Company</h2>
+                <h2 class="py-2"> Update Company</h2>
             </div>
         </div>
     </div>
@@ -52,12 +52,21 @@
                             <label asp-for="Company.Email" class="ms-2"></label>
                             <span asp-validation-for="Company.Email" class="text-danger"></span>
                         </div>
+                        <div class="form-flaoting py-2 col-12">
+                            @if (Model.Company.Categories != null)
+                            {
+                                <p>Current categories: </p>
+                                @foreach (var item in Model.Company.Categories)
+                                {
+                                    <span class="badge rounded-pill bg-primary">@item.Name</span>
+                                }
+                            }
+                        </div>
                         <div class="form-floating py-2 col-12">
-                            <select asp-for="Company.CategoryId" asp-items="Model.CategoryList" class="form-select border-0 shadow">
-                                <option value="">-- Select Category --</option>
+                            <select asp-for="CategoriesId" asp-items="Model.CategoryList" class="form-select border-0 shadow" multiple>
+                                <option value="" disabled>-- Select Category --</option>
                             </select>
-
-                            <span asp-validation-for="Company.CategoryId" class="text-danger"></span>
+                            <span asp-validation-for="Company.Categories" class="text-danger"></span>
                         </div>
                         <div class="form-floating py-2 col-12">
                             <label asp-for="Company.Description" class="ms-2"></label>
@@ -67,19 +76,12 @@
                             <span asp-validation-for="Company.Description" class="text-danger"></span>
                         </div>
                         <div class="form-floating py-2 col-12">
-                            <label asp-for="Company.ImageUrl" class="ms-2"></label> 
-                            <input  type="file" name="file" class="form-control" />
+                            <label asp-for="Company.ImageUrl" class="ms-2"></label>
+                            <input type="file" name="file" class="form-control" />
                         </div>
                         <div class="row pt-2">
                             <div class="col-6 col-md-3">
-                                @if (Model.Company.Id != 0)
-                                {
-                                    <button type="submit" class="btn btn-primary form-control">Update</button>
-                                }
-                                else
-                                {
-                                    <button type="submit" class="btn btn-primary form-control">Create</button>
-                                }
+                                <button type="submit" class="btn btn-primary form-control">Update</button>
                             </div>
                             <div class="col-6 col-md-3">
                                 <a asp-controller="Company" asp-action="Index" class="btn btn-outline-primary border  form-control">
@@ -106,5 +108,7 @@
         });
     </script>
 
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }

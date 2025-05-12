@@ -23,7 +23,7 @@ public class CategoryController(IUnitOfWork _unitOfWork) : Controller
         }
 
         var category = _unitOfWork.Categories.Get(c => c.Id == categoryId);
-
+        
         if (category == null)
         {
             return NotFound();
@@ -73,23 +73,23 @@ public class CategoryController(IUnitOfWork _unitOfWork) : Controller
     [HttpPost]
     public IActionResult Delete(int id)
     {
-        var objFromDb = _unitOfWork.Categories.Get(c => c.Id == id);
-        var companies = _unitOfWork.Companies.GetAll(u=>u.CategoryId == id);
+        var objFromDb = _unitOfWork.Categories.Get(c => c.Id == id, includeProperties: "Companies");
+        
         if (objFromDb == null)
         {
             TempData["error"] = "Error while deleting";
             return RedirectToAction(nameof(Index));
             //return Json(new { success = false, message = "Error while deleting" });
         }
-        if(!companies.Any())
+        if (objFromDb.Companies is null || objFromDb.Companies.Any())
+        {
+            TempData["error"] = "Can not delete a category if it is assigned to any company";
+        }
+        else
         {
             _unitOfWork.Categories.Remove(objFromDb);
             _unitOfWork.Save();
             TempData["success"] = "Category successfully deleted";
-        }
-        else
-        {
-            TempData["error"] = "Can not delete a category if it is assigned to any company";
         }
 
         return RedirectToAction(nameof(Index));

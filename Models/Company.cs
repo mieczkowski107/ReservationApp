@@ -34,10 +34,12 @@ public class Company
     [EmailAddress]
     public string? Email { get; set; }
 
-    public int CategoryId { get; set; }
+    /*public int CategoryId { get; set; }
     [ForeignKey("CategoryId")]
-    [ValidateNever]
-    public Category? Category { get; set; }
+    [ValidateNever
+    public Category? Category { get; set; }*/
+
+    public ICollection<Category>? Categories { get; set; }
 
     [Required]
     public string? Description { get; set; }

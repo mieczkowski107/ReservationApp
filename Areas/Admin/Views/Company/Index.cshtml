@@ -8,7 +8,7 @@
             </h2>
         </div>
         <div class="col-6 text-end">
-            <a asp-controller="Company" asp-action="Upsert" class="btn btn-primary"><i class="bi bi-plus-circle"></i> Create new company </a>
+            <a asp-controller="Company" asp-action="Create" class="btn btn-primary"><i class="bi bi-plus-circle"></i> Create new company </a>
         </div>
     </div>
 </div>
@@ -52,7 +52,10 @@
                         Email: @item.Email<br />
                     </td>
                     <td>
-                        @item.Category!.Name
+                        @foreach (var category in item.Categories!)
+                        {
+                            <span class="badge rounded-pill bg-secondary">@category.Name</span>
+                        }
                     </td>
                     <td class="pt-4 px-0">
                         <div class="container px-0">
@@ -62,7 +65,7 @@
                                     <a asp-area="Admin" asp-controller="Appointment" asp-action="Index" asp-route-Id="@item.Id" class="dropdown-item p-2"> Appointments <i class="bi bi-card-list m-0"></i></a>
                                     <a asp-controller="Service" asp-action="Index" asp-route-Id="@item.Id" class="dropdown-item p-2 "> Services <i class="bi bi-boxes"></i></a>
                                     <hr class="dropdown-divider" />
-                                    <a asp-controller="Company" asp-action="Upsert" asp-route-Id="@item.Id" class="dropdown-item btn-primary p-2 ">Edit <i class="bi bi-pencil-square"></i></a>
+                                    <a asp-controller="Company" asp-action="Edit" asp-route-Id="@item.Id" class="dropdown-item btn-primary p-2 ">Edit <i class="bi bi-pencil-square"></i></a>
                                     <a asp-controller="Company" asp-action="Delete" asp-route-Id="@item.Id" class="dropdown-item btn-danger p-2">Delete <i class="bi bi-trash-fill"></i></a>
                                 </div>
                             </div>

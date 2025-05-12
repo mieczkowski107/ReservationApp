@@ -1,0 +1,103 @@
+﻿@using ReservationApp.Models.ViewModels
+@model CompanyVM
+
+<div class="card shadow border-0 my-4">
+    <div class="card-header bg-secondary bg-gradient ml-0 py-3">
+        <div class="row">
+            <div class="col-12 text-center">
+                <h2 class="py-2"> Create Company</h2>
+            </div>
+        </div>
+    </div>
+    <div class="card-body p-4">
+        <form method="post" class="row" enctype="multipart/form-data">
+            <input asp-for="Company.Id" hidden />
+            <input asp-for="Company.ImageUrl" hidden />
+            <div class="row">
+                <div class="col-12">
+                    <div class="border p-3">
+                        <div class="form-floating py-2 col-12">
+                            <input asp-for="Company.Name" class="form-control border-0 shadow" />
+                            <label asp-for="Company.Name" class="ms-2"></label>
+                            <span asp-validation-for="Company.Name" class="text-danger"></span>
+                        </div>
+                        <div class="form-floating py-2 col-12">
+                            <input asp-for="Company.Address" class="form-control border-0 shadow" />
+                            <label asp-for="Company.Address" class="ms-2"></label>
+                            <span asp-validation-for="Company.Address" class="text-danger"></span>
+                        </div>
+                        <div class="form-floating py-2 col-12">
+                            <input asp-for="Company.City" class="form-control border-0 shadow" />
+                            <label asp-for="Company.City" class="ms-2"></label>
+                            <span asp-validation-for="Company.City" class="text-danger"></span>
+                        </div>
+                        <div class="form-floating py-2 col-12">
+                            <input asp-for="Company.State" class="form-control border-0 shadow" />
+                            <label asp-for="Company.State" class="ms-2"></label>
+                            <span asp-validation-for="Company.State" class="text-danger"></span>
+                        </div>
+                        <div class="form-floating py-2 col-12">
+                            <input asp-for="Company.Zip" class="form-control border-0 shadow" />
+                            <label asp-for="Company.Zip" class="ms-2"></label>
+                            <span asp-validation-for="Company.Zip" class="text-danger"></span>
+                        </div>
+                        <div class="form-floating py-2 col-12">
+                            <input asp-for="Company.Phone" class="form-control border-0 shadow" />
+                            <label asp-for="Company.Phone" class="ms-2"></label>
+                            <span asp-validation-for="Company.Phone" class="text-danger"></span>
+                        </div>
+                        <div class="form-floating py-2 col-12">
+                            <input asp-for="Company.Email" class="form-control border-0 shadow" />
+                            <label asp-for="Company.Email" class="ms-2"></label>
+                            <span asp-validation-for="Company.Email" class="text-danger"></span>
+                        </div>
+                        <div class="form-floating py-2 col-12">
+                            <select asp-for="CategoriesId" asp-items="Model.CategoryList" class="form-select border-0 shadow" multiple>
+                                <option value="" disabled>-- Select Category --</option>
+                            </select>
+                            <span asp-validation-for="Company.Categories" class="text-danger"></span>
+                        </div>
+                        <div class="form-floating py-2 col-12">
+                            <label asp-for="Company.Description" class="ms-2"></label>
+                            <textarea asp-for="Company.Description" class="form-control border-0 shadow">
+
+                           </textarea>
+                            <span asp-validation-for="Company.Description" class="text-danger"></span>
+                        </div>
+                        <div class="form-floating py-2 col-12">
+                            <label asp-for="Company.ImageUrl" class="ms-2"></label>
+                            <input type="file" name="file" class="form-control" />
+                        </div>
+                        <div class="row pt-2">
+                            <div class="col-6 col-md-3">
+                                <button type="submit" class="btn btn-primary form-control">Create</button>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <a asp-controller="Company" asp-action="Index" class="btn btn-outline-primary border  form-control">
+                                    Back to List <i class="bi bi-arrow-left"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </form>
+    </div>
+</div>
+@section Scripts {
+    <script src="https://cdn.tiny.cloud/1/zblvnhjnh8jmx26kj7dk9zi73g86b7ta2wm52ydc2b9en2le/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
+
+    <script>
+        tinymce.init({
+          selector: 'textarea',
+          resize: false,
+          plugins: 'anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount',
+          toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table | align lineheight | numlist bullist indent outdent | emoticons charmap | removeformat',
+        });
+    </script>
+
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

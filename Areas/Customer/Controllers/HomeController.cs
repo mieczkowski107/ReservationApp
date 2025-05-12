@@ -1,5 +1,7 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using ReservationApp.Data.Repository;
 using ReservationApp.Data.Repository.IRepository;
 using ReservationApp.Models;
 using ReservationApp.Models.ViewModels;
@@ -10,17 +12,22 @@ namespace ReservationApp.Areas.Customer.Controllers;
 public class HomeController(ILogger<HomeController> logger, IUnitOfWork unitOfWork) : Controller
 {
     private readonly ILogger<HomeController> _logger = logger;
-    public IActionResult Index()
+    public IActionResult Index(int? categoryId)
     {
-        var companies = unitOfWork.Companies.GetAll().ToList();
+        var companies = unitOfWork.Companies.GetAll(categoryId.HasValue ? u => u.Categories.Any(c => c.Id == categoryId) : null,
+                                                    includeProperties: "Categories").ToList();
+
         var categories = unitOfWork.Categories.GetAll().ToList();
 
         var categoryCompanyPair = new CompaniesCategoriesVM
         {
-            CategoryCompanyPair = categories.ToDictionary(
-                category => category,
-                category => companies.Where(c => c.CategoryId == category.Id).ToList()
-            )
+            Category = categoryId.HasValue ? categories.Where(u => u.Id == categoryId.Value).FirstOrDefault() : null,
+            Companies = companies,
+            Categories = categories.Select(i => new SelectListItem
+            {
+                Value = i.Id.ToString(),
+                Text = i.Name
+            })
         };
 
         return View(categoryCompanyPair);
@@ -31,7 +38,7 @@ public class HomeController(ILogger<HomeController> logger, IUnitOfWork unitOfWo
         var services = unitOfWork.Services.GetAll(s => s.CompanyId == companyId, includeProperties: nameof(Company)).ToList();
         var reviews = unitOfWork.Review.GetAll(filter: r => r.Appointment.Service.CompanyId == companyId,
                                                   includeProperties: "Appointment.Service.Company");
-        var ratingAvg = reviews.Any() ?  reviews.Average(r => r.Rating) : 0;
+        var ratingAvg = reviews.Any() ? reviews.Average(r => r.Rating) : 0;
         var quantity = reviews.Count();
 
         if (!services.Any())
