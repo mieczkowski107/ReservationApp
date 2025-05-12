@@ -184,7 +184,7 @@
                                             <h4>${item.serviceName}</h5>
                                             </div>
                                             <div class="col-4 text-center">
-                                            <p>Created at: ${item.createdAt}</p>
+                                            <p>Created at: <time>${new Date(item.createdAt).toLocaleDateString('pl-PL')}</time></p>
                                             </div>
                                             <div class="col-4 text-end">
                                              <p>Rating: ${item.rating}</p>
