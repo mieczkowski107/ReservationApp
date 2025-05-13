@@ -10,6 +10,8 @@ public class CompanyVM
 {
     public Company? Company { get; set; }
     [ValidateNever]
+
     public IEnumerable<SelectListItem> CategoryList { get; set; }
-    public List<int> CategoriesId { get; set; } = [];
+    [AllowNull]
+    public List<int>? CategoriesId { get; set; }
 }

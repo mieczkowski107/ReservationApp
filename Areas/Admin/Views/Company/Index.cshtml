@@ -8,7 +8,13 @@
             </h2>
         </div>
         <div class="col-6 text-end">
-            <a asp-controller="Company" asp-action="Create" class="btn btn-primary"><i class="bi bi-plus-circle"></i> Create new company </a>
+            @if (!Model.Any())
+            {
+                <a asp-controller="Company" asp-action="Create" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i>
+                    Create new company
+                </a>
+            }
         </div>
     </div>
 </div>
@@ -61,7 +67,7 @@
                         <div class="container px-0">
                             <div class="dropdown px-0">
                                 <a class="nav-link dropdown-toggle show btn btn-outline-info m-1" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="true">Actions</a>
-                                <div class="dropdown-menu"  data-bs-popper="static">
+                                <div class="dropdown-menu" data-bs-popper="static">
                                     <a asp-area="Admin" asp-controller="Appointment" asp-action="Index" asp-route-Id="@item.Id" class="dropdown-item p-2"> Appointments <i class="bi bi-card-list m-0"></i></a>
                                     <a asp-controller="Service" asp-action="Index" asp-route-Id="@item.Id" class="dropdown-item p-2 "> Services <i class="bi bi-boxes"></i></a>
                                     <hr class="dropdown-divider" />

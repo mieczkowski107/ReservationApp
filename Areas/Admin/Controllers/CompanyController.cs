@@ -89,7 +89,11 @@ public class CompanyController(ApplicationDbContext db, IUnitOfWork _unitOfWork,
         {
             companyVm.Company.OwnerId = userId;
             companyVm.Company.Categories = categoriesForCompany.ToList();
-            _imageService.ImageUpload(companyVm, file);
+            if (!_imageService.ImageUpload(companyVm, file))
+            {
+                return RedirectToAction(nameof(Create));
+            }
+
             _unitOfWork.Companies.Add(companyVm.Company!);
             TempData["success"] = "Company added successfully!";
             _unitOfWork.Save();
@@ -127,7 +131,9 @@ public class CompanyController(ApplicationDbContext db, IUnitOfWork _unitOfWork,
     [HttpPost]
     public IActionResult Edit(CompanyVM companyVm, IFormFile? file)
     {
+        var isCategoryChanging = companyVm.CategoriesId != null ? true : false;
         var categoriesForCompany = _unitOfWork.Categories.GetAll(u => companyVm.CategoriesId.Contains(u.Id), tracked: true);
+
         if (ModelState.IsValid)
         {
             var userId = UserService.GetUserId(User);
@@ -137,11 +143,23 @@ public class CompanyController(ApplicationDbContext db, IUnitOfWork _unitOfWork,
             {
                 return Forbid();
             }
-            if (categoriesForCompany != null)
+
+            if (isCategoryChanging)
             {
                 userCompany.Categories = categoriesForCompany.ToList();
             }
-            _imageService.ImageUpload(companyVm, file);
+            if (!_imageService.ImageUpload(companyVm, file))
+            {
+                return RedirectToAction(nameof(Edit), new { companyVm?.Company?.Id });
+            }
+            userCompany.Name = companyVm.Company!.Name;
+            userCompany.Address = companyVm.Company.Address;
+            userCompany.City = companyVm.Company.City;
+            userCompany.State = companyVm.Company.State;
+            userCompany.Zip = companyVm.Company.Zip;
+            userCompany.Phone = companyVm.Company.Phone;
+            userCompany.Description = companyVm.Company.Email;
+            userCompany.ImageUrl = companyVm.Company.ImageUrl;
             _unitOfWork.Save();
             TempData["success"] = "Company updated successfully!";
             return RedirectToAction("Index");
@@ -180,7 +198,7 @@ public class CompanyController(ApplicationDbContext db, IUnitOfWork _unitOfWork,
         }
         _imageService.DeleteImage(userCompany!.ImageUrl!);
         _unitOfWork.Companies.Remove(userCompany);
-        _unitOfWork.Save();        
+        _unitOfWork.Save();
 
         TempData["success"] = "Company successfully deleted";
         return RedirectToAction(nameof(Index));
