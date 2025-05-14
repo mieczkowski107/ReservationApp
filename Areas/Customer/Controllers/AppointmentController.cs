@@ -96,12 +96,6 @@ public class AppointmentController(IUnitOfWork unitOfWork, INotificationService 
         unitOfWork.Appointments.Add(appointment);
         unitOfWork.Save();
 
-        notificationService.CreateNotification(NotificationType.Confirmation, appointment.Id);
-        BackgroundJob.Enqueue(() => notificationService.SendNotification(appointment.Id));
-
-        var jobId = BackgroundJob.Schedule(() => notificationService.CreateNotification(NotificationType.Reminder,appointment.Id), new DateTime(appointment.Date, appointment.Time).AddHours(-24));
-        BackgroundJob.ContinueJobWith(jobId, () => notificationService.SendNotification(appointment.Id));
-
         return RedirectToAction(nameof(Confirmation), new { appointment.Id });
     }
 
@@ -117,6 +111,13 @@ public class AppointmentController(IUnitOfWork unitOfWork, INotificationService 
         }
         if (appointment.Status == AppointmentStatus.Pending && !appointment.Service!.IsPrepaymentRequired)
         {
+            //Hangfire 
+            notificationService.CreateNotification(NotificationType.Confirmation, appointment.Id);
+            BackgroundJob.Enqueue(() => notificationService.SendNotification(appointment.Id));
+
+            // Schedule a reminder notification 24 hours before the appointment
+            var jobId = BackgroundJob.Schedule(() => notificationService.CreateNotification(NotificationType.Reminder, appointment.Id), new DateTime(appointment.Date, appointment.Time).AddHours(-24));
+            BackgroundJob.ContinueJobWith(jobId, () => notificationService.SendNotification(appointment.Id));
             TempData["success"] = "Your appointment has been confirmed!";
             appointment.Status = AppointmentStatus.Confirmed;
         }
@@ -132,6 +133,13 @@ public class AppointmentController(IUnitOfWork unitOfWork, INotificationService 
                 TempData["success"] = "Your appointment has been confirmed!";
                 unitOfWork.Payment.UpdateStripePaymentID(appointment.Id, session.Id, session.PaymentIntentId);
                 unitOfWork.Payment.UpdateStatus(appointment.Id, AppointmentStatus.Confirmed, PaymentStatus.Succeeded);
+                //Hangfire 
+                notificationService.CreateNotification(NotificationType.Confirmation, appointment.Id);
+                BackgroundJob.Enqueue(() => notificationService.SendNotification(appointment.Id));
+
+                // Schedule a reminder notification 24 hours before the appointment
+                var jobId = BackgroundJob.Schedule(() => notificationService.CreateNotification(NotificationType.Reminder, appointment.Id), new DateTime(appointment.Date, appointment.Time).AddHours(-24));
+                BackgroundJob.ContinueJobWith(jobId, () => notificationService.SendNotification(appointment.Id));
             }
         }
         ViewBag.IsReviewed = unitOfWork.Review.Get(u => u.AppointmentId == id) != null;
@@ -171,7 +179,18 @@ public class AppointmentController(IUnitOfWork unitOfWork, INotificationService 
             appointment.Status = AppointmentStatus.Cancelled;
             TempData["success"] = "Your appointment has been cancelled.";
         }
+
+        var notification = unitOfWork.Notification.Get(u => u.AppointmentId == id && u.Type == NotificationType.Reminder && u.Status != NotificationStatus.Sent, tracked: true);
+
         notificationService.CreateNotification(NotificationType.Cancellation, appointment.Id);
+        var jobId = BackgroundJob.Enqueue(() => notificationService.SendNotification(appointment.Id));
+        if(notification != null)
+        {
+            BackgroundJob.ContinueJobWith(jobId, () => unitOfWork.Notification.Remove(notification));
+        }
+        
+
+
         unitOfWork.Appointments.Update(appointment);
         unitOfWork.Save();
         return RedirectToAction(nameof(UserAppointments));
