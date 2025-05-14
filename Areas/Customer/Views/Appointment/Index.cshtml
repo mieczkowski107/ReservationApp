@@ -114,20 +114,20 @@
 
                     dateContainer.appendChild(button);
 
-                    // Automatycznie wybierz pierwszą dostępną datę
+                    
                     if (index === 0) {
                         button.click();
                     }
                 });
             }
 
-            // Aktualizacja dostępnych godzin
+           
             function updateTimes(selectedDate) {
                 selectedDateTitle.textContent = `Available hours: ${selectedDate}`;
-                selectedDateInput.value = selectedDate;  // Ustawienie wartości w ukrytym polu
+                selectedDateInput.value = selectedDate;  
                 timeContainer.innerHTML = "";
-                selectedTimeInput.value = ""; // Resetowanie godziny przy zmianie daty
-                submitBtn.disabled = true; // Dezaktywacja przycisku, gdy nie wybrano godziny
+                selectedTimeInput.value = ""; 
+                submitBtn.disabled = true; 
 
                 if (availableDates[selectedDate]) {
                     availableDates[selectedDate].forEach(time => {

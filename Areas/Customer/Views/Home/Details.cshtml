@@ -167,7 +167,6 @@
                         type: `GET`,
                         url: `/Customer/review/GetCompanyReviews?companyId=${companyId}`,
                         success: function(response) {
-                            // Assuming response.data is the array you're interested in
                             done(response.data);
                         }
                     });
