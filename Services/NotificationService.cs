@@ -34,7 +34,22 @@ public class NotificationService(IUnitOfWork unitOfWork, IEmailSender emailSende
     {
         var notification = unitOfWork.Notification.Get(n => n.AppointmentId == appointmentId && n.Status != NotificationStatus.Sent,
                                                        tracked: true);
-        if (notification != null && notification.Status != NotificationStatus.Sent)
+        var appointment = GetAppointmentDetails(appointmentId);
+        if (notification == null)
+        {
+            return;
+        }
+        if(appointment == null)
+        {
+            return;
+        }
+        if(appointment.Status == AppointmentStatus.Cancelled && notification.Type == NotificationType.Reminder)
+        {
+            notification.Status = NotificationStatus.Cancelled;
+            unitOfWork.Save();
+            return;
+        }
+        if (notification.Status != NotificationStatus.Sent && notification.Status != NotificationStatus.Cancelled)
         {
             await emailSender.SendEmailAsync(notification.userEmail, notification.Title!, notification.Message!);
             notification.Status = NotificationStatus.Sent;
