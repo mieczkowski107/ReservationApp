@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using ReservationApp.Data.Repository;
@@ -61,6 +62,19 @@ public class HomeController(ILogger<HomeController> logger, IUnitOfWork unitOfWo
     public IActionResult Error()
     {
         return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+    }
+
+    [Authorize(Roles ="Admin")]
+    [Route("/serilog-ui")]
+    public IActionResult Serilog()
+    {
+        return View();
+    }
+    [Authorize(Roles = "Admin")]
+    [Route("/hangfire")]
+    public IActionResult Hangfire()
+    {
+        return View();
     }
 
 }
