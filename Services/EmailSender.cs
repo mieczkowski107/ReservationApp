@@ -22,7 +22,7 @@ public class EmailSender : IEmailSender
             Credentials = new NetworkCredential(mail, pw),
             EnableSsl = true
         };
-        return client.SendMailAsync(new MailMessage(from: mail,
+        return client.SendMailAsync(new MailMessage(from: mail!,
                                                     to: email,
                                                     subject,htmlMessage
                                                     ));

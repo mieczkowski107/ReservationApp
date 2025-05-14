@@ -11,6 +11,10 @@ public class NotificationService(IUnitOfWork unitOfWork, IEmailSender emailSende
     public void CreateNotification(NotificationType type, int appointmentId)
     {
         var appointment = GetAppointmentDetails(appointmentId);
+        if(appointment == null)
+        {
+            return;
+        }
         if (appointment.Status != AppointmentStatus.Cancelled)
         {
             var (title, message) = PrepareNotification(type, appointment);
@@ -28,18 +32,19 @@ public class NotificationService(IUnitOfWork unitOfWork, IEmailSender emailSende
     }
     public async Task SendNotification(int appointmentId)
     {
-        var notification = unitOfWork.Notification.Get(n => n.AppointmentId == appointmentId && n.Status != NotificationStatus.Sent, tracked: true);
-        if (notification != null)
+        var notification = unitOfWork.Notification.Get(n => n.AppointmentId == appointmentId && n.Status != NotificationStatus.Sent,
+                                                       tracked: true);
+        if (notification != null && notification.Status != NotificationStatus.Sent)
         {
             await emailSender.SendEmailAsync(notification.userEmail, notification.Title!, notification.Message!);
             notification.Status = NotificationStatus.Sent;
             unitOfWork.Save();
         }
     }
-    private Appointment GetAppointmentDetails(int appointmentId)
+    private Appointment? GetAppointmentDetails(int appointmentId)
     {
         var appointment = unitOfWork.Appointments.Get(a => a.Id == appointmentId, includeProperties: "Service.Company,User");
-        return appointment == null ? throw new Exception("Appointment not found") : appointment;
+        return appointment;
     }
     private static (string title, string message) PrepareNotification(NotificationType type, Appointment appointment)
     {
@@ -65,8 +70,9 @@ public class NotificationService(IUnitOfWork unitOfWork, IEmailSender emailSende
                 message = "Your appointment has been completed. Please leave a review! URL: xyz.com ";
                 break;
         }
-        message += $"Appointment details: {appointment.Service.Name} on {appointment.Date} at {appointment.Time}.\n" +
-                   $"Address: {appointment.Service.Company.Address}, {appointment.Service.Company.City}, {appointment.Service.Company.State}";
+        message += $"Appointment details: {appointment.Service!.Name} on {appointment.Date} at {appointment.Time}.\n" +
+                   $"Address: {appointment.Service!.Company!.Address}, {appointment.Service.Company.City}, " +
+                   $"{appointment.Service.Company.State}";
 
         return (title, message);
     }
