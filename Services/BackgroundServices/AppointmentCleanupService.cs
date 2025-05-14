@@ -3,7 +3,7 @@ using ReservationApp.Data.Repository.IRepository;
 using ReservationApp.Services.Interfaces;
 using ReservationApp.Utility.Enums;
 
-namespace ReservationApp.Services;
+namespace ReservationApp.Services.BackgroundServices;
 
 public class AppointmentCleanupService(IUnitOfWork unitOfWork) : IAppointmentCleanupService
 {
@@ -34,9 +34,10 @@ public class AppointmentCleanupService(IUnitOfWork unitOfWork) : IAppointmentCle
         var dateNow = DateTime.UtcNow;
         foreach (var appointment in unitOfWork.Appointments.GetAll(u => u.Status == AppointmentStatus.Pending))
         {
-            var isOverThreshold = ((dateNow - appointment.CreatedAt).TotalMinutes > thresholdMinutes);
+            var isOverThreshold = (dateNow - appointment.CreatedAt).TotalMinutes > thresholdMinutes;
             if (isOverThreshold)
             {
+                appointment.Status = AppointmentStatus.Cancelled;
                 unitOfWork.Appointments.Remove(appointment);
             }
         }
