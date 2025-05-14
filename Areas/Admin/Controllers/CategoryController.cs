@@ -82,7 +82,7 @@ public class CategoryController(IUnitOfWork _unitOfWork) : Controller
             return NotFound();
             //return Json(new { success = false, message = "Error while deleting" });
         }
-        if (objFromDb.Companies is null || !objFromDb.Companies.Any())
+        if (objFromDb.Companies.Any())
         {
             TempData["error"] = "Can not delete a category if it is assigned to any company";
         }
