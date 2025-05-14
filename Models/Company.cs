@@ -12,7 +12,6 @@ public class Company
     [Required]
     [MaxLength(255)]
     public string? Name { get; set; }
-
     [Required]
     [MaxLength(255)]    
     public string? Address { get; set; }
@@ -28,20 +27,16 @@ public class Company
     [RegularExpression(@"^\d{2}-\d{3}$", ErrorMessage = "Invalid ZIP code format. Expected format: XX-XXX.")]
     public string? Zip { get; set; }
     [Required]
-    [Phone] 
+    [Phone]
+    [RegularExpression(@"^\d{3}-\d{3}-\d{3}$", ErrorMessage = "Invalid phone number format. Expected format: XXX-XXX-XXX.")]
     public string? Phone { get; set; }
     [Required]
     [EmailAddress]
+    [RegularExpression(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", ErrorMessage = "Invalid email format.")]
     public string? Email { get; set; }
-
-    /*public int CategoryId { get; set; }
-    [ForeignKey("CategoryId")]
-    [ValidateNever
-    public Category? Category { get; set; }*/
-
-    public ICollection<Category>? Categories { get; set; }
-
+    
     [Required]
+    [MaxLength(1000)]
     public string? Description { get; set; }
         
     [ValidateNever]
@@ -52,8 +47,8 @@ public class Company
     [ForeignKey("OwnerId")]
     [ValidateNever]
     ApplicationUser? Owner { get; set; }
-    
 
+    public ICollection<Category>? Categories { get; set; }
 
 
 }
