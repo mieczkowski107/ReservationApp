@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Hangfire;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ReservationApp.Areas.Customer.Controllers;
 using ReservationApp.Data.Repository.IRepository;
@@ -147,8 +148,15 @@ public class AppointmentController(IUnitOfWork unitOfWork, INotificationService 
             TempData["success"] = "Your appointment has been cancelled.";
         }
 
-        // TODO: Send email to user about the cancellation
-        notificationService.CreateNotification(NotificationType.Cancellation, id);
+        //Hangfire 
+        var notification = unitOfWork.Notification.Get(u => u.AppointmentId == id && u.Type == NotificationType.Reminder && u.Status != NotificationStatus.Sent, tracked: true);
+
+        notificationService.CreateNotification(NotificationType.Cancellation, appointment.Id);
+        var jobId = BackgroundJob.Enqueue(() => notificationService.SendNotification(appointment.Id));
+        if (notification != null)
+        {
+            BackgroundJob.ContinueJobWith(jobId, () => unitOfWork.Notification.Remove(notification));
+        }
 
         unitOfWork.Save();
         return RedirectToAction(nameof(Details), new { id });
