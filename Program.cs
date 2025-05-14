@@ -54,12 +54,17 @@ namespace ReservationApp
             #region Identity
             builder.Services
                 .AddIdentity<IdentityUser, IdentityRole>()
-                .AddEntityFrameworkStores<ApplicationDbContext>();
-               // .AddDefaultTokenProviders(); //for 2FA and email confirmation
+                .AddEntityFrameworkStores<ApplicationDbContext>()
+                .AddDefaultTokenProviders(); //for 2FA and email confirmation
 
 
             builder.Services.Configure<IdentityOptions>(options =>
             {
+                options.SignIn.RequireConfirmedPhoneNumber = false;
+                options.SignIn.RequireConfirmedAccount = false;
+                options.SignIn.RequireConfirmedEmail = false;
+                options.Tokens.EmailConfirmationTokenProvider = TokenOptions.DefaultEmailProvider;
+
                 // Password settings.
                 options.Password.RequireDigit = true;
                 options.Password.RequireLowercase = true;
