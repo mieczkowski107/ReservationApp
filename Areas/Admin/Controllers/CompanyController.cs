@@ -116,6 +116,10 @@ public class CompanyController(ApplicationDbContext db, IUnitOfWork _unitOfWork,
             }
         }
         var company = _unitOfWork.Companies.Get(u => u.Id == id, includeProperties: "Categories");
+        if(company == null)
+        {
+            return Forbid();
+        }
         var companyVm = new CompanyVM()
         {
             Company = company,
