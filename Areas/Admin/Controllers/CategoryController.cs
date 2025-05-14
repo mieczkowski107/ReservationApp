@@ -71,17 +71,18 @@ public class CategoryController(IUnitOfWork _unitOfWork) : Controller
     }
 
     [HttpPost]
-    public IActionResult Delete(int id)
+    [ActionName("Delete")] 
+    public IActionResult DeletePost(int id)
     {
         var objFromDb = _unitOfWork.Categories.Get(c => c.Id == id, includeProperties: "Companies");
         
         if (objFromDb == null)
         {
             TempData["error"] = "Error while deleting";
-            return RedirectToAction(nameof(Index));
+            return NotFound();
             //return Json(new { success = false, message = "Error while deleting" });
         }
-        if (objFromDb.Companies is null || objFromDb.Companies.Any())
+        if (objFromDb.Companies is null || !objFromDb.Companies.Any())
         {
             TempData["error"] = "Can not delete a category if it is assigned to any company";
         }
